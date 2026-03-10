@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HomeAway France — Trouvez un hôte</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0e0c0a; --surface: #141210; --card: #1a1714;
+      --border: #2a2420; --accent: #d4763b; --gold: #c9a84c;
+      --text: #f0e8dc; --muted: #7a6a5a; --soft: #2e2620;
+      --green: #4caf7d; --red: #e05252;
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+
+    header {
+      border-bottom: 1px solid var(--border); padding: 0.9rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(14,12,10,0.97); z-index: 500; flex-shrink: 0; gap: 1rem; flex-wrap: wrap;
+    }
+    .logo { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 300; white-space: nowrap; display: flex; align-items: center; gap: 0.6rem; }
+    .logo em { font-style: italic; color: var(--accent); }
+    .logo span { font-size: 0.72rem; color: var(--muted); font-family: 'Outfit', sans-serif; font-weight: 300; }
+    .header-controls { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; flex: 1; justify-content: flex-end; }
+    .search-wrap { position: relative; }
+    .search-wrap input { padding: 0.55rem 1rem 0.55rem 2.2rem; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 0.82rem; outline: none; width: 200px; transition: border-color 0.2s, width 0.2s; }
+    .search-wrap input:focus { border-color: var(--accent); width: 240px; }
+    .search-wrap .si { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--muted); }
+    select { padding: 0.55rem 0.85rem; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 0.82rem; outline: none; cursor: pointer; transition: border-color 0.2s; }
+    select:focus { border-color: var(--accent); }
+    .btn { padding: 0.55rem 1rem; border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #be6530; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn:active { transform: scale(0.97); }
+
+    .france-banner { background: linear-gradient(135deg, rgba(0,35,149,0.25), rgba(237,41,57,0.12)); border-bottom: 1px solid var(--border); padding: 0.45rem 1.5rem; font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+
+    .main { display: flex; flex: 1; overflow: hidden; }
+
+    .sidebar { width: 340px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+    .sidebar-header { padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .sidebar-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 300; margin-bottom: 0.1rem; }
+    .sidebar-header p { font-size: 0.75rem; color: var(--muted); }
+    .nat-pills { display: flex; gap: 0.4rem; flex-wrap: wrap; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .nat-pill { padding: 0.2rem 0.6rem; background: var(--card); border: 1px solid var(--border); border-radius: 2rem; font-size: 0.7rem; cursor: pointer; transition: all 0.15s; color: var(--muted); }
+    .nat-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .nat-pill.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .host-list { flex: 1; overflow-y: auto; padding: 0.75rem; }
+    .host-list::-webkit-scrollbar { width: 4px; }
+    .host-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .host-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 0.6rem; cursor: pointer; transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s; animation: slideIn 0.3s ease both; }
+    @keyframes slideIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+    .host-card:hover { border-color: var(--accent); transform: translateX(2px); box-shadow: 0 4px 16px rgba(212,118,59,0.1); }
+    .host-card.active { border-color: var(--accent); background: var(--soft); }
+    .hc-top { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+    .hc-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--soft); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; color: var(--accent); font-family: 'Cormorant Garamond', serif; font-weight: 600; }
+    .hc-name { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600; }
+    .hc-nat { font-size: 0.72rem; color: var(--muted); }
+    .hc-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .pill { display: inline-flex; align-items: center; gap: 0.25rem; background: var(--soft); border-radius: 2rem; padding: 0.18rem 0.6rem; font-size: 0.7rem; color: var(--muted); }
+    .pill.avail { background: rgba(76,175,125,0.12); color: var(--green); }
+    .pill.busy { background: rgba(122,106,90,0.15); color: var(--muted); }
+    .hc-city { font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem; }
+    .empty-list { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+    .empty-list .big { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .empty-list p { font-size: 0.82rem; line-height: 1.6; }
+
+    #map { flex: 1; }
+
+    .leaflet-popup-content-wrapper { background: var(--card) !important; color: var(--text) !important; border: 1px solid var(--border) !important; border-radius: 14px !important; box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; min-width: 230px; }
+    .leaflet-popup-tip { background: var(--card) !important; }
+    .leaflet-popup-content { font-family: 'Outfit', sans-serif; font-size: 0.85rem; margin: 14px 16px !important; }
+    .popup-flag { font-size: 1.6rem; margin-bottom: 0.4rem; }
+    .popup-name { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600; }
+    .popup-nat { font-size: 0.7rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+    .popup-row { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.2rem; }
+    .popup-bio { font-size: 0.78rem; color: var(--muted); margin: 0.5rem 0; line-height: 1.5; font-style: italic; border-left: 2px solid var(--border); padding-left: 0.6rem; }
+    .popup-avail { display:inline-flex; align-items:center; gap:0.3rem; font-size:0.72rem; margin-top:0.5rem; }
+    .popup-avail::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--green); }
+    .popup-avail.no::before { background: var(--muted); }
+    .popup-maps { display:inline-block; margin-top:0.6rem; font-size:0.75rem; color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(212,118,59,0.3); }
+
+    .loading-bar { position:fixed; top:0; left:0; right:0; height:2px; background:linear-gradient(to right,var(--accent),var(--gold)); z-index:9999; transform:scaleX(0); transform-origin:left; transition:transform 0.3s; display:none; }
+    .loading-bar.show { display:block; transform:scaleX(0.7); }
+    .loading-bar.done { transform:scaleX(1); opacity:0; transition:transform 0.2s,opacity 0.3s 0.2s; }
+    .count-badge { display:inline-flex; align-items:center; justify-content:center; background:var(--accent); color:white; border-radius:2rem; font-size:0.65rem; font-weight:600; padding:0.1rem 0.5rem; min-width:20px; margin-left:0.4rem; }
+    .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--green); border-radius:10px; padding:0.8rem 1.1rem; font-size:0.82rem; z-index:999; transform:translateY(60px); opacity:0; transition:all 0.3s; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.error { border-left-color:var(--red); }
+  </style>
+</head>
+<body>
+
+<div class="loading-bar" id="loadingBar"></div>
+
+<header>
+  <div class="logo">
+    🇫🇷 Home<em>Away</em>
+    <span><span data-fr="France — Trouvez un hôte" data-en="France — Find a Host">France — Trouvez un hôte</span></span>
+  </div>
+  <div class="header-controls">
+    <div class="search-wrap">
+      <span class="si">🔍</span>
+      <input type="text" id="searchInput" placeholder="Ville, nom, nationalité…" data-fr-placeholder="Ville, nom, nationalité…" data-en-placeholder="City, name, nationality…" oninput="applyFilters()"/>
+    </div>
+    <select id="cityFilter" onchange="applyFilters()">
+      <option value="" data-fr="Toutes les villes" data-en="All cities">Toutes les villes</option>
+      <option>Paris</option><option>Lyon</option><option>Marseille</option>
+      <option>Bordeaux</option><option>Toulouse</option><option>Strasbourg</option>
+      <option>Lille</option><option>Nice</option><option>Nantes</option>
+    </select>
+    <select id="availFilter" onchange="applyFilters()">
+      <option value="" data-fr="Tous" data-en="All">Tous</option>
+      <option value="true" data-fr="Disponibles" data-en="Available only">Disponibles</option>
+    </select>
+    <button class="btn btn-ghost" onclick="resetFilters()"><span data-fr="Réinitialiser" data-en="Reset">Réinitialiser</span></button>
+    <a href="host_portal.html" class="btn btn-primary"><span data-fr="🏠 Espace hôte" data-en="🏠 Host Portal">🏠 Espace hôte</span></a>
+  </div>
+</header>
+
+<div class="france-banner">
+  <span data-fr="🇫🇷 &nbsp;Hôtes basés en France — immigrants, expatriés et Français accueillants" data-en="🇫🇷 &nbsp;Hosts based in France — immigrants, expats and welcoming French locals">🇫🇷 &nbsp;Hôtes basés en France — immigrants, expatriés et Français accueillants</span>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2><span data-fr="Hôtes" data-en="Hosts">Hôtes</span> <span class="count-badge" id="hostCount">0</span></h2>
+      <p><span data-fr="Cliquez sur un hôte pour le localiser" data-en="Click a host to locate them">Cliquez sur un hôte pour le localiser</span></p>
+    </div>
+    <div class="nat-pills" id="natPills"></div>
+    <div class="host-list" id="hostList"></div>
+  </div>
+  <div id="map"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:5000/api'
+
+const CULTURES = [
+  {code:'FR',label:'Français',flag:'🇫🇷'},
+  {code:'IN',label:'Indien',flag:'🇮🇳'},{code:'CN',label:'Chinois',flag:'🇨🇳'},
+  {code:'JP',label:'Japonais',flag:'🇯🇵'},{code:'MX',label:'Mexicain',flag:'🇲🇽'},
+  {code:'NG',label:'Africain',flag:'🇳🇬'},{code:'KR',label:'Coréen',flag:'🇰🇷'},
+  {code:'IT',label:'Italien',flag:'🇮🇹'},{code:'TR',label:'Turc',flag:'🇹🇷'},
+  {code:'PH',label:'Philippin',flag:'🇵🇭'},{code:'BR',label:'Brésilien',flag:'🇧🇷'},
+  {code:'VN',label:'Vietnamien',flag:'🇻🇳'},{code:'TH',label:'Thaïlandais',flag:'🇹🇭'},
+  {code:'EG',label:'Égyptien',flag:'🇪🇬'},{code:'PK',label:'Pakistanais',flag:'🇵🇰'},
+  {code:'ET',label:'Éthiopien',flag:'🇪🇹'},{code:'GH',label:'Ghanéen',flag:'🇬🇭'},
+]
+const cultureMap = Object.fromEntries(CULTURES.map(c => [c.code, c]))
+
+let allHosts = [], filteredHosts = [], markers = {}, selectedNat = ''
+
+// Map centred on France
+const map = L.map('map').setView([46.8, 2.35], 6)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+  maxZoom: 19
+}).addTo(map)
+
+async function loadHosts() {
+  showLoader(true)
+  try {
+    const res = await fetch(`${API}/hosts`)
+    const data = await res.json()
+    allHosts = data.hosts || []
+    buildNatPills()
+    applyFilters()
+  } catch {
+    showToast('Impossible de joindre le backend — app_auth.py est-il lancé ?', true)
+  } finally { showLoader(false) }
+}
+
+function buildNatPills() {
+  const codes = [...new Set(allHosts.map(h => h.nationality_code))]
+  const pills = document.getElementById('natPills')
+  pills.innerHTML = `<span class="nat-pill active" onclick="filterNat(this,'')"><span data-fr="Tous" data-en="All">Tous</span></span>`
+  codes.forEach(code => {
+    const c = cultureMap[code] || { flag:'🌐', label: code }
+    pills.innerHTML += `<span class="nat-pill" onclick="filterNat(this,'${code}')">${c.flag} ${c.label}</span>`
+  })
+}
+
+function filterNat(el, code) {
+  document.querySelectorAll('.nat-pill').forEach(p => p.classList.remove('active'))
+  el.classList.add('active')
+  selectedNat = code
+  applyFilters()
+}
+
+function applyFilters() {
+  const q     = document.getElementById('searchInput').value.toLowerCase()
+  const avail = document.getElementById('availFilter').value
+  const city  = document.getElementById('cityFilter').value
+
+  filteredHosts = allHosts.filter(h => {
+    const matchNat   = !selectedNat || h.nationality_code === selectedNat
+    const matchAvail = !avail || String(h.available) === avail
+    const matchCity  = !city || h.city.toLowerCase().includes(city.toLowerCase())
+    const matchQ     = !q || h.full_name.toLowerCase().includes(q)
+                          || h.city.toLowerCase().includes(q)
+                          || h.nationality.toLowerCase().includes(q)
+    return matchNat && matchAvail && matchCity && matchQ
+  })
+
+  renderList()
+  renderMarkers()
+  document.getElementById('hostCount').textContent = filteredHosts.length
+}
+
+function resetFilters() {
+  document.getElementById('searchInput').value = ''
+  document.getElementById('availFilter').value = ''
+  document.getElementById('cityFilter').value = ''
+  selectedNat = ''
+  document.querySelectorAll('.nat-pill').forEach((p,i) => p.classList.toggle('active', i===0))
+  applyFilters()
+  map.setView([46.8, 2.35], 6)
+}
+
+function renderList() {
+  const list = document.getElementById('hostList')
+  if (!filteredHosts.length) {
+    list.innerHTML = `<div class="empty-list"><div class="big">🇫🇷</div><p>${HomeAwayLang.getCurrent()==='fr'?'Aucun hôte trouvé.<br/>Essayez un autre filtre.':'No hosts found.<br/>Try a different filter.'}</p></div>`
+    return
+  }
+  list.innerHTML = filteredHosts.map((h, i) => {
+    const c = cultureMap[h.nationality_code] || { flag:'🌐' }
+    const initials = (h.first_name[0] + h.last_name[0]).toUpperCase()
+    const langs = Array.isArray(h.languages) ? h.languages.slice(0,2).join(', ') : h.languages
+    return `
+      <div class="host-card" id="card-${h.id}" style="animation-delay:${i*0.04}s" onclick="focusHost(${h.id})">
+        <div class="hc-top">
+          <div class="hc-avatar">${initials}</div>
+          <div>
+            <div class="hc-name">${h.full_name}</div>
+            <div class="hc-nat">${c.flag} ${h.nationality}</div>
+          </div>
+        </div>
+        <div class="hc-meta">
+          <span class="pill ${h.available?'avail':'busy'}">${h.available?'● Disponible':'○ Indisponible'}</span>
+          <span class="pill">👥 ${h.max_guests} pers.</span>
+          ${langs ? `<span class="pill">🗣 ${langs}</span>` : ''}
+        </div>
+        <div class="hc-city">📍 ${h.city}</div>
+        ${h.avg_rating ? `<div style="display:flex;align-items:center;gap:0.35rem;margin-top:0.4rem;font-size:0.8rem">${'★'.repeat(Math.round(h.avg_rating)).padEnd(5,'☆').split('').map((s,i)=>`<span style="color:${i<Math.round(h.avg_rating)?'#f0b429':'#3a3028'}">${s}</span>`).join('')}<span style="font-size:0.7rem;color:var(--muted)">${h.avg_rating} (${h.review_count})</span></div>` : ''}
+        <a href="host_profile.html?id=${h.id}" style="font-size:0.72rem;color:var(--accent);text-decoration:none;margin-top:0.4rem;display:inline-block" onclick="event.stopPropagation()">Voir profil →</a>
+      </div>`
+  }).join('')
+}
+
+function renderMarkers() {
+  Object.values(markers).forEach(m => map.removeLayer(m))
+  markers = {}
+
+  filteredHosts.forEach(h => {
+    if (!h.lat || !h.lng) return
+    const c = cultureMap[h.nationality_code] || { flag:'🌐' }
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="font-size:1.5rem;line-height:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.5));cursor:pointer">${c.flag}</div>`,
+      iconSize:[28,28], iconAnchor:[14,14], popupAnchor:[0,-18],
+    })
+    const langs = Array.isArray(h.languages) ? h.languages.join(', ') : (h.languages||'')
+    const bio   = h.bio ? h.bio.substring(0,120)+(h.bio.length>120?'…':'') : ''
+
+    const starsHtml = h.avg_rating
+      ? '★'.repeat(Math.round(h.avg_rating)).padEnd(5,'☆').split('').map((s,i) => `<span style="color:${i<Math.round(h.avg_rating)?'#f0b429':'#3a3028'}">${s}</span>`).join('')
+      : ''
+    const marker = L.marker([h.lat, h.lng], { icon }).addTo(map)
+    marker.bindPopup(`
+      <div class="popup-flag">${c.flag}</div>
+      <div class="popup-name">${h.full_name}</div>
+      <div class="popup-nat">${h.nationality}</div>
+      ${h.avg_rating ? `<div style="display:flex;align-items:center;gap:0.4rem;margin:0.3rem 0;font-size:0.9rem">${starsHtml}<span style="font-size:0.75rem;color:var(--muted)">${h.avg_rating} (${h.review_count})</span></div>` : ''}
+      <div class="popup-row">📍 ${h.address}, ${h.city}</div>
+      ${langs ? `<div class="popup-row">🗣 ${langs}</div>` : ''}
+      <div class="popup-row">👥 Jusqu'à ${h.max_guests} personne${h.max_guests!==1?'s':''}</div>
+      ${bio ? `<div class="popup-bio">${bio}</div>` : ''}
+      <span class="popup-avail ${h.available?'':'no'}">${h.available?'Disponible':'Indisponible'}</span><br/>
+      <div style="display:flex;gap:0.6rem;margin-top:0.6rem;flex-wrap:wrap">
+        <a class="popup-maps" href="host_profile.html?id=${h.id}">👤 Voir profil & avis →</a>
+        <a class="popup-maps" href="${h.maps_url}" target="_blank">📍 Adresse</a>
+      </div>
+    `, { maxWidth: 280 })
+
+    marker.on('click', () => highlightCard(h.id))
+    markers[h.id] = marker
+  })
+}
+
+function focusHost(id) {
+  const host = allHosts.find(h => h.id === id)
+  if (!host?.lat || !host?.lng) { showToast('Pas de coordonnées pour cet hôte', true); return }
+  highlightCard(id)
+  map.flyTo([host.lat, host.lng], 15, { duration: 1.2 })
+  setTimeout(() => markers[id]?.openPopup(), 1300)
+}
+
+function highlightCard(id) {
+  document.querySelectorAll('.host-card').forEach(c => c.classList.remove('active'))
+  const card = document.getElementById(`card-${id}`)
+  if (card) { card.classList.add('active'); card.scrollIntoView({ behavior:'smooth', block:'nearest' }) }
+}
+
+function showLoader(show) {
+  const bar = document.getElementById('loadingBar')
+  bar.className = 'loading-bar'+(show?' show':' done')
+  if (!show) setTimeout(() => bar.className='loading-bar', 600)
+}
+
+function showToast(msg, error=false) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.className = 'toast show'+(error?' error':'')
+  setTimeout(() => t.className='toast', 3000)
+}
+
+loadHosts()
+</script>
+<script src="lang.js"></script>
+<script>document.addEventListener("DOMContentLoaded",()=>HomeAwayLang.injectLangToggle(".header-controls"))</script>
+</body>
+</html>

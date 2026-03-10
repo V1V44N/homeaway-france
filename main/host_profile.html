@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HomeAway — Profil Hôte</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0e0c0a; --surface: #141210; --card: #1a1714;
+      --border: #2a2420; --accent: #d4763b; --gold: #c9a84c;
+      --text: #f0e8dc; --muted: #7a6a5a; --soft: #2e2620;
+      --green: #4caf7d; --red: #e05252; --star: #f0b429;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── NAV ── */
+    nav { padding: 1rem 2rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--surface); }
+    .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 300; text-decoration: none; color: var(--text); }
+    .nav-logo em { font-style: italic; color: var(--accent); }
+    .nav-right { display: flex; gap: 0.6rem; align-items: center; }
+    .btn { padding: 0.5rem 1rem; border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #be6530; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── LAYOUT ── */
+    .page { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+    /* ── HERO CARD ── */
+    .hero-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 2rem; display: flex; gap: 2rem; align-items: flex-start;
+      margin-bottom: 2rem; animation: rise 0.5s ease both;
+    }
+    @keyframes rise { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+    .avatar {
+      width: 90px; height: 90px; border-radius: 50%; flex-shrink: 0;
+      background: var(--soft); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', serif; font-size: 2.2rem;
+      font-weight: 600; color: var(--accent);
+    }
+    .hero-info { flex: 1; }
+    .hero-name { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; line-height: 1.1; }
+    .hero-nat { font-size: 0.8rem; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.2rem; }
+
+    .rating-summary { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; }
+    .stars-display { display: flex; gap: 2px; }
+    .star { font-size: 1rem; color: var(--muted); }
+    .star.filled { color: var(--star); }
+    .star.half { color: var(--star); opacity: 0.6; }
+    .rating-num { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; }
+    .rating-count { font-size: 0.75rem; color: var(--muted); }
+
+    .hero-pills { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.9rem; }
+    .pill { display: inline-flex; align-items: center; gap: 0.25rem; background: var(--soft); border-radius: 2rem; padding: 0.22rem 0.7rem; font-size: 0.72rem; color: var(--muted); }
+    .pill.avail { background: rgba(76,175,125,0.12); color: var(--green); }
+    .pill.busy { background: rgba(122,106,90,0.15); }
+
+    .hero-bio { font-size: 0.9rem; color: var(--muted); line-height: 1.7; margin-top: 1rem; font-style: italic; border-left: 2px solid var(--border); padding-left: 0.9rem; }
+
+    .hero-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1.2rem; }
+    .meta-item { font-size: 0.8rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; }
+    .meta-item strong { color: var(--text); }
+
+    /* ── TABS ── */
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
+    .tab {
+      padding: 0.75rem 1.5rem; font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent;
+      margin-bottom: -1px; transition: all 0.15s; background: none; border-top: none; border-left: none; border-right: none;
+      font-family: 'Outfit', sans-serif;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .tab-panel { display: none; animation: rise 0.3s ease both; }
+    .tab-panel.active { display: block; }
+
+    /* ── OVERVIEW TAB ── */
+    .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media(max-width:560px) { .overview-grid { grid-template-columns: 1fr; } .hero-card { flex-direction: column; } .hero-meta { grid-template-columns: 1fr; } }
+    .info-block { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; }
+    .info-block h4 { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+    .info-row { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.4rem; display: flex; gap: 0.4rem; }
+    .info-row strong { color: var(--text); }
+
+    /* ── REVIEWS TAB ── */
+    .reviews-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .rating-big { text-align: center; }
+    .rating-big .num { font-family: 'Cormorant Garamond', serif; font-size: 4rem; font-weight: 300; line-height: 1; color: var(--accent); }
+    .rating-big .out { font-size: 0.75rem; color: var(--muted); }
+    .rating-big .stars-display { justify-content: center; margin-top: 0.3rem; }
+
+    .category-bars { flex: 1; max-width: 280px; }
+    .cat-bar { margin-bottom: 0.7rem; }
+    .cat-bar-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .cat-bar-label span:last-child { color: var(--text); }
+    .cat-bar-track { height: 5px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+    .cat-bar-fill { height: 100%; background: linear-gradient(to right, var(--accent), var(--gold)); border-radius: 3px; transition: width 0.6s ease; }
+
+    .review-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 1.25rem; margin-bottom: 1rem; animation: rise 0.3s ease both;
+    }
+    .review-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .reviewer-info { display: flex; align-items: center; gap: 0.7rem; }
+    .reviewer-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--soft); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-family: 'Cormorant Garamond', serif; font-weight: 600; color: var(--accent); flex-shrink: 0; }
+    .reviewer-name { font-size: 0.9rem; font-weight: 500; }
+    .reviewer-meta { font-size: 0.7rem; color: var(--muted); }
+    .review-stars { display: flex; gap: 2px; flex-shrink: 0; }
+    .review-body { font-size: 0.85rem; color: var(--muted); line-height: 1.65; margin-top: 0.5rem; }
+    .review-cats { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    .review-cat-pill { background: var(--soft); border-radius: 2rem; padding: 0.18rem 0.65rem; font-size: 0.68rem; color: var(--muted); }
+    .review-cat-pill span { color: var(--star); }
+    .review-photo { margin-top: 0.75rem; border-radius: 10px; max-width: 100%; max-height: 200px; object-fit: cover; border: 1px solid var(--border); }
+    .review-date { font-size: 0.68rem; color: var(--muted); margin-top: 0.5rem; }
+    .delete-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; transition: color 0.15s; }
+    .delete-btn:hover { color: var(--red); }
+
+    .no-reviews { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+    .no-reviews .big { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+    /* ── WRITE REVIEW TAB ── */
+    .review-form-wrap { max-width: 560px; }
+    .auth-notice { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; text-align: center; margin-bottom: 1.5rem; }
+    .auth-notice p { font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem; }
+
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label { display: block; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+    .form-group textarea, .form-group input[type=file] { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 0.85rem; padding: 0.75rem 1rem; outline: none; transition: border-color 0.2s; resize: vertical; }
+    .form-group textarea:focus, .form-group input[type=file]:focus { border-color: var(--accent); }
+
+    /* Interactive star picker */
+    .star-picker { display: flex; gap: 6px; margin-top: 0.25rem; }
+    .star-pick { font-size: 1.8rem; cursor: pointer; color: var(--muted); transition: color 0.1s, transform 0.1s; line-height: 1; }
+    .star-pick:hover, .star-pick.selected { color: var(--star); transform: scale(1.15); }
+
+    .cat-ratings { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+    @media(max-width:480px) { .cat-ratings { grid-template-columns: 1fr; } }
+    .cat-rate-item label { display: block; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+    .cat-star-row { display: flex; gap: 3px; }
+    .cat-star { font-size: 1.1rem; cursor: pointer; color: var(--muted); transition: color 0.1s; }
+    .cat-star:hover, .cat-star.sel { color: var(--star); }
+
+    .photo-preview { margin-top: 0.75rem; border-radius: 10px; max-width: 100%; max-height: 180px; object-fit: cover; border: 1px solid var(--border); display: none; }
+
+    .submit-btn { width: 100%; padding: 0.9rem; background: var(--accent); color: white; border: none; border-radius: 10px; font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: background 0.15s; margin-top: 0.5rem; }
+    .submit-btn:hover { background: #be6530; }
+    .submit-btn:disabled { background: var(--soft); color: var(--muted); cursor: not-allowed; }
+
+    /* toast */
+    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: 10px; padding: 0.8rem 1.1rem; font-size: 0.82rem; z-index: 999; transform: translateY(60px); opacity: 0; transition: all 0.3s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { border-left-color: var(--red); }
+
+    .loading { text-align: center; padding: 3rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">🇫🇷 Home<em>Away</em></a>
+  <div class="nav-right">
+    <span id="travellerBadge" style="font-size:0.78rem;color:var(--muted);display:none"></span>
+    <a href="traveller_auth.html" class="btn btn-ghost" id="loginBtn"><span data-fr="Se connecter" data-en="Log in">Se connecter</span></a>
+    <a href="traveller_map.html" class="btn btn-primary"><span data-fr="← Carte" data-en="← Map">← Carte</span></a>
+  </div>
+</nav>
+
+<div class="page">
+  <div id="loading" class="loading"><span data-fr="Chargement du profil…" data-en="Loading profile…">Chargement du profil…</span></div>
+  <div id="content" style="display:none">
+
+    <!-- HERO -->
+    <div class="hero-card" id="heroCard"></div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('overview', this)"><span data-fr="Aperçu" data-en="Overview">Aperçu</span></button>
+      <button class="tab" onclick="switchTab('reviews', this)" id="reviewsTab">Avis <span id="reviewTabCount"></span></button>
+      <button class="tab" onclick="switchTab('write', this)"><span data-fr="✍️ Laisser un avis" data-en="✍️ Write a Review">✍️ Laisser un avis</span></button>
+    </div>
+
+    <div class="tab-panel active" id="tab-overview"></div>
+    <div class="tab-panel" id="tab-reviews"></div>
+    <div class="tab-panel" id="tab-write"></div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:5000/api'
+const params = new URLSearchParams(window.location.search)
+const hostId = params.get('id')
+
+let hostData = null
+let reviewsData = null
+let travellerToken = localStorage.getItem('traveller_token')
+let travellerInfo  = JSON.parse(localStorage.getItem('traveller_info') || 'null')
+
+// Update nav
+if (travellerInfo) {
+  document.getElementById('travellerBadge').textContent = `👤 ${travellerInfo.first_name}`
+  document.getElementById('travellerBadge').style.display = 'inline'
+  document.getElementById('loginBtn').textContent = 'Se déconnecter'
+  document.getElementById('loginBtn').href = '#'
+  document.getElementById('loginBtn').onclick = () => {
+    localStorage.removeItem('traveller_token')
+    localStorage.removeItem('traveller_info')
+    location.reload()
+  }
+}
+
+if (!hostId) {
+  document.getElementById('loading').textContent = 'No host ID in URL. Add ?id=1'
+} else {
+  loadAll()
+}
+
+async function loadAll() {
+  try {
+    const [hRes, rRes] = await Promise.all([
+      fetch(`${API}/hosts/${hostId}`),
+      fetch(`${API}/hosts/${hostId}/reviews`)
+    ])
+    hostData    = await hRes.json()
+    reviewsData = await rRes.json()
+    document.getElementById('loading').style.display = 'none'
+    document.getElementById('content').style.display = 'block'
+    document.title = `HomeAway — ${hostData.full_name}`
+    renderHero()
+    renderOverview()
+    renderReviews()
+    renderWriteForm()
+  } catch(e) {
+    document.getElementById('loading').textContent = 'Impossible de charger le profil. Backend lancé ?'
+  }
+}
+
+// ── STARS HELPER ──
+function starsHTML(rating, size = '1rem') {
+  if (!rating) return '<span style="color:var(--muted);font-size:0.75rem">Pas encore noté</span>'
+  let html = '<div class="stars-display">'
+  for (let i = 1; i <= 5; i++) {
+    if (i <= Math.floor(rating)) html += `<span class="star filled" style="font-size:${size}">★</span>`
+    else if (i - rating < 1) html += `<span class="star half" style="font-size:${size}">★</span>`
+    else html += `<span class="star" style="font-size:${size}">★</span>`
+  }
+  return html + '</div>'
+}
+
+function formatDate(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
+// ── HERO ──
+function renderHero() {
+  const h = hostData
+  const initials = (h.first_name[0] + h.last_name[0]).toUpperCase()
+  const langs = Array.isArray(h.languages) ? h.languages.join(', ') : h.languages
+  document.getElementById('heroCard').innerHTML = `
+    <div class="avatar">${initials}</div>
+    <div class="hero-info">
+      <div class="hero-name">${h.full_name}</div>
+      <div class="hero-nat">${h.nationality_code ? getNatFlag(h.nationality_code) : ''} ${h.nationality} · ${h.city}</div>
+      <div class="rating-summary">
+        ${starsHTML(h.avg_rating, '1rem')}
+        ${h.avg_rating ? `<span class="rating-num">${h.avg_rating}</span>` : ''}
+        <span class="rating-count">(${h.review_count} avis)</span>
+      </div>
+      <div class="hero-pills">
+        <span class="pill ${h.available ? 'avail' : 'busy'}">${h.available ? '● Disponible' : '○ Indisponible'}</span>
+        <span class="pill">👥 ${h.max_guests} pers. max</span>
+        ${langs ? `<span class="pill">🗣 ${langs}</span>` : ''}
+        ${h.hosting_since ? `<span class="pill">🏠 Hôte depuis ${h.hosting_since}</span>` : ''}
+      </div>
+      ${h.bio ? `<div class="hero-bio">"${h.bio}"</div>` : ''}
+    </div>
+  `
+}
+
+// ── OVERVIEW ──
+function renderOverview() {
+  const h = hostData
+  document.getElementById('tab-overview').innerHTML = `
+    <div class="overview-grid">
+      <div class="info-block">
+        <h4>Localisation</h4>
+        <div class="info-row">📍 <strong>${h.address}</strong></div>
+        <div class="info-row">🏙 <strong>${h.city}, ${h.country}</strong></div>
+        <div style="margin-top:0.75rem">
+          <a href="${h.maps_url}" target="_blank" class="btn btn-ghost" style="font-size:0.75rem;padding:0.4rem 0.8rem">Voir sur Google Maps →</a>
+        </div>
+      </div>
+      <div class="info-block">
+        <h4>Infos pratiques</h4>
+        <div class="info-row">🌍 Nationalité : <strong>${h.nationality}</strong></div>
+        <div class="info-row">👥 Capacité : <strong>${h.max_guests} personne${h.max_guests !== 1 ? 's' : ''}</strong></div>
+        ${h.hosting_since ? `<div class="info-row">📅 Hôte depuis : <strong>${h.hosting_since}</strong></div>` : ''}
+        ${h.phone ? `<div class="info-row">📞 <strong>${h.phone}</strong></div>` : ''}
+      </div>
+      ${Array.isArray(h.languages) && h.languages.length ? `
+      <div class="info-block">
+        <h4>Langues parlées</h4>
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.25rem">
+          ${h.languages.map(l => `<span class="pill">${l}</span>`).join('')}
+        </div>
+      </div>` : ''}
+      <div class="info-block">
+        <h4>Note globale</h4>
+        ${h.avg_rating ? `
+          <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem">
+            <span style="font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:300;color:var(--accent)">${h.avg_rating}</span>
+            <div>${starsHTML(h.avg_rating)}<div style="font-size:0.7rem;color:var(--muted);margin-top:0.2rem">${h.review_count} avis</div></div>
+          </div>` : '<div style="color:var(--muted);font-size:0.85rem">Pas encore d\'avis</div>'}
+        ${reviewsData?.category_avgs ? Object.entries(reviewsData.category_avgs).filter(([,v]) => v).map(([k,v]) =>
+          `<div class="cat-bar"><div class="cat-bar-label"><span>${catLabel(k)}</span><span>${v}/5</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${v/5*100}%"></div></div></div>`
+        ).join('') : ''}
+      </div>
+    </div>
+  `
+}
+
+// ── REVIEWS ──
+function renderReviews() {
+  const r = reviewsData
+  const countEl = document.getElementById('reviewTabCount')
+  countEl.textContent = r.total ? `(${r.total})` : ''
+
+  if (!r.total) {
+    document.getElementById('tab-reviews').innerHTML = `
+      <div class="no-reviews"><div class="big">💬</div><p>Aucun avis pour le moment.<br/>Soyez le premier à laisser un avis !</p></div>`
+    return
+  }
+
+  const catAvgs = r.category_avgs || {}
+  let html = `
+    <div class="reviews-header">
+      <div class="rating-big">
+        <div class="num">${r.avg_rating}</div>
+        <div class="out">sur 5</div>
+        ${starsHTML(r.avg_rating, '1.1rem')}
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.3rem">${r.total} avis</div>
+      </div>
+      <div class="category-bars">
+        ${['cleanliness','hospitality','communication'].map(cat =>
+          catAvgs[cat] ? `
+          <div class="cat-bar">
+            <div class="cat-bar-label"><span>${catLabel(cat)}</span><span>${catAvgs[cat]}</span></div>
+            <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${catAvgs[cat]/5*100}%"></div></div>
+          </div>` : ''
+        ).join('')}
+      </div>
+    </div>`
+
+  html += r.reviews.map(rv => `
+    <div class="review-card">
+      <div class="review-top">
+        <div class="reviewer-info">
+          <div class="reviewer-avatar">${rv.traveller_name[0]}</div>
+          <div>
+            <div class="reviewer-name">${rv.traveller_name}</div>
+            <div class="reviewer-meta">${rv.traveller_nat || 'Voyageur'}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem">
+          <div class="review-stars">${'★'.repeat(rv.stars).split('').map(() => `<span style="color:var(--star)">★</span>`).join('')}${'★'.repeat(5-rv.stars).split('').map(() => `<span style="color:var(--muted)">★</span>`).join('')}</div>
+          ${travellerInfo && rv.traveller_id === travellerInfo.id ? `<button class="delete-btn" onclick="deleteReview(${rv.id})">🗑</button>` : ''}
+        </div>
+      </div>
+      ${rv.body ? `<div class="review-body">${rv.body}</div>` : ''}
+      ${(rv.cleanliness || rv.hospitality || rv.communication) ? `
+      <div class="review-cats">
+        ${rv.cleanliness ? `<span class="review-cat-pill">Propreté <span>${'★'.repeat(rv.cleanliness)}</span></span>` : ''}
+        ${rv.hospitality ? `<span class="review-cat-pill">Hospitalité <span>${'★'.repeat(rv.hospitality)}</span></span>` : ''}
+        ${rv.communication ? `<span class="review-cat-pill">Communication <span>${'★'.repeat(rv.communication)}</span></span>` : ''}
+      </div>` : ''}
+      ${rv.photo ? `<img src="${rv.photo}" class="review-photo" alt="Photo de l'avis"/>` : ''}
+      <div class="review-date">${formatDate(rv.created_at)}</div>
+    </div>
+  `).join('')
+
+  document.getElementById('tab-reviews').innerHTML = html
+}
+
+// ── WRITE REVIEW FORM ──
+function renderWriteForm() {
+  const panel = document.getElementById('tab-write')
+
+  if (!travellerToken) {
+    panel.innerHTML = `
+      <div class="auth-notice">
+        <div style="font-size:2rem;margin-bottom:0.75rem">✍️</div>
+        <p>Vous devez être connecté en tant que <strong>voyageur</strong> pour laisser un avis.</p>
+        <a href="traveller_auth.html?redirect=host_profile.html?id=${hostId}" class="btn btn-primary">Se connecter / S'inscrire</a>
+      </div>`
+    return
+  }
+
+  panel.innerHTML = `
+    <div class="review-form-wrap">
+      <div class="form-group">
+        <label>Note globale *</label>
+        <div class="star-picker" id="starPicker">
+          ${[1,2,3,4,5].map(i => `<span class="star-pick" data-val="${i}" onclick="pickStar(${i})">★</span>`).join('')}
+        </div>
+        <input type="hidden" id="starsVal" value="0"/>
+      </div>
+
+      <div class="cat-ratings">
+        ${['cleanliness','hospitality','communication'].map(cat => `
+        <div class="cat-rate-item">
+          <label>${catLabel(cat)}</label>
+          <div class="cat-star-row" id="cat-${cat}">
+            ${[1,2,3,4,5].map(i => `<span class="cat-star" data-cat="${cat}" data-val="${i}" onclick="pickCat('${cat}',${i})">★</span>`).join('')}
+          </div>
+          <input type="hidden" id="val-${cat}" value="0"/>
+        </div>`).join('')}
+      </div>
+
+      <div class="form-group">
+        <label>Votre avis</label>
+        <textarea id="reviewBody" rows="4" placeholder="Partagez votre expérience avec cet hôte…"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Photo (optionnel)</label>
+        <input type="file" id="photoInput" accept="image/*" onchange="previewPhoto(this)"/>
+        <img id="photoPreview" class="photo-preview" alt="Aperçu"/>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="submitReview()">Publier l'avis</button>
+    </div>
+  `
+}
+
+function pickStar(val) {
+  document.getElementById('starsVal').value = val
+  document.querySelectorAll('.star-pick').forEach(s => {
+    s.classList.toggle('selected', parseInt(s.dataset.val) <= val)
+  })
+}
+
+function pickCat(cat, val) {
+  document.getElementById(`val-${cat}`).value = val
+  document.querySelectorAll(`#cat-${cat} .cat-star`).forEach(s => {
+    s.classList.toggle('sel', parseInt(s.dataset.val) <= val)
+  })
+}
+
+function previewPhoto(input) {
+  const file = input.files[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = e => {
+    const img = document.getElementById('photoPreview')
+    img.src = e.target.result
+    img.style.display = 'block'
+  }
+  reader.readAsDataURL(file)
+}
+
+async function submitReview() {
+  const stars = parseInt(document.getElementById('starsVal').value)
+  if (!stars) { showToast('Veuillez choisir une note globale', true); return }
+
+  const body = {
+    stars,
+    cleanliness:   parseInt(document.getElementById('val-cleanliness').value) || null,
+    hospitality:   parseInt(document.getElementById('val-hospitality').value) || null,
+    communication: parseInt(document.getElementById('val-communication').value) || null,
+    body: document.getElementById('reviewBody').value.trim(),
+  }
+
+  // Photo
+  const photoInput = document.getElementById('photoInput')
+  if (photoInput.files[0]) {
+    const file = photoInput.files[0]
+    const base64 = await new Promise((res, rej) => {
+      const r = new FileReader()
+      r.onload = () => res(r.result.split(',')[1])
+      r.onerror = rej
+      r.readAsDataURL(file)
+    })
+    body.photo_base64 = base64
+    body.photo_mime = file.type
+  }
+
+  const btn = document.getElementById('submitBtn')
+  btn.disabled = true
+  btn.textContent = 'Publication…'
+
+  try {
+    const res = await fetch(`${API}/hosts/${hostId}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${travellerToken}` },
+      body: JSON.stringify(body)
+    })
+    const data = await res.json()
+    if (!res.ok) { showToast(data.error || 'Erreur', true); btn.disabled = false; btn.textContent = 'Publier l\'avis'; return }
+
+    showToast('Avis publié ! Merci 🙏')
+    // Reload reviews
+    const rRes = await fetch(`${API}/hosts/${hostId}/reviews`)
+    reviewsData = await rRes.json()
+    const hRes = await fetch(`${API}/hosts/${hostId}`)
+    hostData = await hRes.json()
+    renderHero()
+    renderOverview()
+    renderReviews()
+    renderWriteForm()
+    switchTab('reviews', document.querySelectorAll('.tab')[1])
+  } catch {
+    showToast('Erreur réseau', true)
+    btn.disabled = false
+    btn.textContent = 'Publier l\'avis'
+  }
+}
+
+async function deleteReview(reviewId) {
+  if (!confirm('Supprimer cet avis ?')) return
+  try {
+    const res = await fetch(`${API}/reviews/${reviewId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${travellerToken}` }
+    })
+    if (res.ok) {
+      showToast('Avis supprimé')
+      const rRes = await fetch(`${API}/hosts/${hostId}/reviews`)
+      reviewsData = await rRes.json()
+      renderReviews()
+    }
+  } catch { showToast('Erreur', true) }
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'))
+  el.classList.add('active')
+  document.getElementById(`tab-${name}`).classList.add('active')
+}
+
+function catLabel(cat) {
+  const fr = { cleanliness: '🧹 Propreté', hospitality: '🤝 Hospitalité', communication: '💬 Communication' };
+  const en = { cleanliness: '🧹 Cleanliness', hospitality: '🤝 Hospitality', communication: '💬 Communication' };
+  const map = (typeof HomeAwayLang !== 'undefined' && HomeAwayLang.getCurrent() === 'en') ? en : fr;
+  return map[cat] || cat
+}
+
+function getNatFlag(code) {
+  const flags = { FR:'🇫🇷',IN:'🇮🇳',CN:'🇨🇳',JP:'🇯🇵',MX:'🇲🇽',NG:'🇳🇬',KR:'🇰🇷',IT:'🇮🇹',TR:'🇹🇷',PH:'🇵🇭',BR:'🇧🇷',VN:'🇻🇳',TH:'🇹🇭',EG:'🇪🇬',PK:'🇵🇰',ET:'🇪🇹',GH:'🇬🇭' }
+  return flags[code] || '🌐'
+}
+
+function showToast(msg, error = false) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.className = 'toast show' + (error ? ' error' : '')
+  setTimeout(() => t.className = 'toast', 3200)
+}
+</script>
+<script src="lang.js"></script>
+<script>document.addEventListener("DOMContentLoaded",()=>HomeAwayLang.injectLangToggle(".nav-right"))</script>
+</body>
+</html>

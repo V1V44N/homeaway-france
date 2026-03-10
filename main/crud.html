@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HomeAway — Host Directory</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0e0c0a; --surface: #141210; --card: #1a1714;
+      --border: #2a2420; --accent: #d4763b; --gold: #c9a84c;
+      --text: #f0e8dc; --muted: #7a6a5a; --soft: #2e2620;
+      --green: #4caf7d; --red: #e05252;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── HEADER ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(14,12,10,0.92);
+      backdrop-filter: blur(12px);
+    }
+    .logo { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 300; }
+    .logo em { font-style: italic; color: var(--accent); }
+    .header-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+    /* ── BUTTONS ── */
+    .btn { padding: 0.6rem 1.25rem; border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 0.82rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #be6530; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(224,82,82,0.3); }
+    .btn-danger:hover { background: rgba(224,82,82,0.1); }
+    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+    .btn:active { transform: scale(0.97); }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+    /* ── TOOLBAR ── */
+    .toolbar {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    .search-box {
+      flex: 1; min-width: 200px;
+      position: relative;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 0.65rem 1rem 0.65rem 2.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box input:focus { border-color: var(--accent); }
+    .search-box .icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.9rem; }
+
+    select {
+      padding: 0.65rem 1rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.82rem;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    select:focus { border-color: var(--accent); }
+
+    /* ── STATS ── */
+    .stats { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+    .stat {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.1rem 1.5rem;
+      flex: 1; min-width: 140px;
+    }
+    .stat .num { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 300; color: var(--accent); line-height: 1; }
+    .stat .lbl { font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem; }
+
+    /* ── HOST TABLE ── */
+    .table-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 1rem 1.25rem;
+      text-align: left;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      font-weight: 400;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(212,118,59,0.04); }
+    td { padding: 1rem 1.25rem; font-size: 0.85rem; vertical-align: middle; }
+
+    .host-name { font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; font-weight: 600; }
+    .host-email { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+
+    .flag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: var(--soft);
+      border-radius: 2rem;
+      padding: 0.25rem 0.7rem;
+      font-size: 0.78rem;
+    }
+
+    .avail-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.78rem;
+    }
+    .avail-dot::before {
+      content: '';
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+    .avail-dot.no::before { background: var(--muted); }
+
+    .maps-btn {
+      font-size: 0.72rem;
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(212,118,59,0.3);
+      white-space: nowrap;
+    }
+    .maps-btn:hover { border-color: var(--accent); }
+
+    .actions-cell { display: flex; gap: 0.5rem; }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+    }
+    .empty-state .big { font-size: 3rem; margin-bottom: 1rem; }
+
+    /* ── MODAL ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%; max-width: 620px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2rem;
+      animation: popIn 0.2s ease;
+    }
+    @keyframes popIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+
+    .modal-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+    }
+    .modal-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 300; }
+    .close-btn { background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; line-height: 1; padding: 0.25rem; }
+    .close-btn:hover { color: var(--text); }
+
+    /* ── FORM ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-grid .full { grid-column: 1 / -1; }
+
+    .field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .field label { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+    .field input, .field textarea, .field select {
+      padding: 0.7rem 0.9rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+    .field textarea { resize: vertical; min-height: 80px; }
+
+    .section-divider {
+      grid-column: 1 / -1;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; grid-column: 1/-1; }
+    .toggle-row label { font-size: 0.85rem; color: var(--text); }
+    .toggle {
+      position: relative; width: 44px; height: 24px;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0;
+      background: var(--border);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 3px; top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .toggle input:checked + .slider { background: var(--green); }
+    .toggle input:checked + .slider::before { transform: translateX(20px); }
+
+    .form-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; grid-column: 1/-1; }
+
+    /* ── DETAIL PANEL ── */
+    .detail-section { margin-bottom: 1.25rem; }
+    .detail-label { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem; }
+    .detail-value { font-size: 0.9rem; color: var(--text); line-height: 1.6; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    /* toast */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      border-radius: 10px;
+      padding: 0.9rem 1.25rem;
+      font-size: 0.85rem;
+      z-index: 999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { border-left-color: var(--red); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Home<em>Away</em> <span style="font-size:0.8rem;color:var(--muted);font-family:'Outfit',sans-serif;font-weight:300;">Host Directory</span></div>
+  <div class="header-actions">
+    <button class="btn btn-ghost btn-sm" onclick="seedData()">⚡ Seed Sample Data</button>
+    <button class="btn btn-primary" onclick="openForm()">+ Add Host</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- STATS -->
+  <div class="stats" id="statsBar">
+    <div class="stat"><div class="num" id="statTotal">—</div><div class="lbl">Total Hosts</div></div>
+    <div class="stat"><div class="num" id="statAvail">—</div><div class="lbl">Available Now</div></div>
+    <div class="stat"><div class="num" id="statNations">—</div><div class="lbl">Nationalities</div></div>
+    <div class="stat"><div class="num" id="statCities">—</div><div class="lbl">Cities</div></div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search by name, city, nationality…" oninput="filterHosts()"/>
+    </div>
+    <select id="filterNat" onchange="filterHosts()">
+      <option value="">All Nationalities</option>
+    </select>
+    <select id="filterAvail" onchange="filterHosts()">
+      <option value="">All</option>
+      <option value="true">Available</option>
+      <option value="false">Unavailable</option>
+    </select>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Host</th>
+          <th>Nationality</th>
+          <th>Location</th>
+          <th>Languages</th>
+          <th>Guests</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="hostTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="overlay" id="formOverlay" onclick="closeIfOutside(event,'formOverlay')">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="formTitle">Add New Host</h2>
+      <button class="close-btn" onclick="closeForm()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="section-divider">Personal Details</div>
+      <div class="field"><label>First Name *</label><input id="f_first_name" placeholder="Priya"/></div>
+      <div class="field"><label>Last Name *</label><input id="f_last_name" placeholder="Sharma"/></div>
+      <div class="field"><label>Email *</label><input id="f_email" type="email" placeholder="priya@example.com"/></div>
+      <div class="field"><label>Phone</label><input id="f_phone" placeholder="+44 7700 900000"/></div>
+      <div class="field full"><label>Bio</label><textarea id="f_bio" placeholder="Tell travellers about yourself…"></textarea></div>
+
+      <div class="section-divider">Nationality & Culture</div>
+      <div class="field">
+        <label>Nationality *</label>
+        <select id="f_nationality_code" onchange="syncNationality()">
+          <option value="">Select nationality…</option>
+        </select>
+      </div>
+      <div class="field"><label>Languages (comma-separated)</label><input id="f_languages" placeholder="Hindi, English, Gujarati"/></div>
+
+      <div class="section-divider">Location</div>
+      <div class="field full"><label>Street Address *</label><input id="f_address" placeholder="14 Brick Lane"/></div>
+      <div class="field"><label>City *</label><input id="f_city" placeholder="London"/></div>
+      <div class="field"><label>Country *</label><input id="f_country" placeholder="UK"/></div>
+      <div class="field"><label>Latitude (optional)</label><input id="f_lat" type="number" step="any" placeholder="51.521"/></div>
+      <div class="field"><label>Longitude (optional)</label><input id="f_lng" type="number" step="any" placeholder="-0.0717"/></div>
+
+      <div class="section-divider">Hosting</div>
+      <div class="field"><label>Hosting Since</label><input id="f_hosting_since" placeholder="2022"/></div>
+      <div class="field"><label>Max Guests</label><input id="f_max_guests" type="number" min="1" value="1"/></div>
+      <div class="toggle-row">
+        <label>Available to host</label>
+        <label class="toggle"><input type="checkbox" id="f_available" checked/><span class="slider"></span></label>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeForm()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitForm()">Save Host</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW DETAIL MODAL -->
+<div class="overlay" id="detailOverlay" onclick="closeIfOutside(event,'detailOverlay')">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="detailName">Host Details</h2>
+      <button class="close-btn" onclick="closeDetail()">✕</button>
+    </div>
+    <div id="detailBody"></div>
+    <div style="display:flex;gap:0.75rem;margin-top:1.5rem;justify-content:flex-end">
+      <button class="btn btn-ghost" id="detailEditBtn">✏️ Edit</button>
+      <button class="btn btn-danger" id="detailDeleteBtn">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:5000/api'
+
+const CULTURES = [
+  {code:'IN',label:'Indian',flag:'🇮🇳'},{code:'CN',label:'Chinese',flag:'🇨🇳'},
+  {code:'JP',label:'Japanese',flag:'🇯🇵'},{code:'MX',label:'Mexican',flag:'🇲🇽'},
+  {code:'NG',label:'Nigerian',flag:'🇳🇬'},{code:'KR',label:'Korean',flag:'🇰🇷'},
+  {code:'IT',label:'Italian',flag:'🇮🇹'},{code:'TR',label:'Turkish',flag:'🇹🇷'},
+  {code:'PH',label:'Filipino',flag:'🇵🇭'},{code:'BR',label:'Brazilian',flag:'🇧🇷'},
+  {code:'VN',label:'Vietnamese',flag:'🇻🇳'},{code:'TH',label:'Thai',flag:'🇹🇭'},
+  {code:'EG',label:'Egyptian',flag:'🇪🇬'},{code:'PK',label:'Pakistani',flag:'🇵🇰'},
+  {code:'ET',label:'Ethiopian',flag:'🇪🇹'},{code:'GH',label:'Ghanaian',flag:'🇬🇭'},
+]
+
+const cultureMap = Object.fromEntries(CULTURES.map(c => [c.code, c]))
+
+// Populate dropdowns
+const natSelect = document.getElementById('f_nationality_code')
+const filterNat = document.getElementById('filterNat')
+CULTURES.forEach(c => {
+  natSelect.innerHTML += `<option value="${c.code}">${c.flag} ${c.label}</option>`
+  filterNat.innerHTML += `<option value="${c.code}">${c.flag} ${c.label}</option>`
+})
+
+function syncNationality() {
+  // keeps label in sync — we store both code and label name
+}
+
+// ── STATE ──
+let allHosts = []
+let editingId = null
+let viewingHost = null
+
+// ── FETCH ──
+async function loadHosts() {
+  try {
+    const res = await fetch(`${API}/hosts`)
+    const data = await res.json()
+    allHosts = data.hosts || []
+    updateStats()
+    filterHosts()
+  } catch (e) {
+    showToast('Cannot reach backend — is Flask running on port 5000?', true)
+  }
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = allHosts.length
+  document.getElementById('statAvail').textContent = allHosts.filter(h => h.available).length
+  document.getElementById('statNations').textContent = new Set(allHosts.map(h => h.nationality_code)).size
+  document.getElementById('statCities').textContent = new Set(allHosts.map(h => h.city)).size
+}
+
+function filterHosts() {
+  const q = document.getElementById('searchInput').value.toLowerCase()
+  const nat = document.getElementById('filterNat').value
+  const avail = document.getElementById('filterAvail').value
+
+  let filtered = allHosts.filter(h => {
+    const matchQ = !q || h.full_name.toLowerCase().includes(q) || h.city.toLowerCase().includes(q) || h.nationality.toLowerCase().includes(q) || (h.email||'').toLowerCase().includes(q)
+    const matchNat = !nat || h.nationality_code === nat
+    const matchAvail = avail === '' || String(h.available) === avail
+    return matchQ && matchNat && matchAvail
+  })
+  renderTable(filtered)
+}
+
+function renderTable(hosts) {
+  const tbody = document.getElementById('hostTable')
+  if (!hosts.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="big">🌍</div><p>No hosts found. Add one or seed sample data.</p></div></td></tr>`
+    return
+  }
+
+  tbody.innerHTML = hosts.map(h => {
+    const c = cultureMap[h.nationality_code] || {}
+    const langs = Array.isArray(h.languages) ? h.languages.slice(0,2).join(', ') : h.languages
+    return `<tr onclick="viewHost(${h.id})">
+      <td>
+        <div class="host-name">${h.full_name}</div>
+        <div class="host-email">${h.email}</div>
+      </td>
+      <td><span class="flag-pill">${c.flag||'🌐'} ${h.nationality}</span></td>
+      <td>
+        <div style="font-size:0.85rem">${h.city}, ${h.country}</div>
+        <a class="maps-btn" href="${h.maps_url}" target="_blank" onclick="event.stopPropagation()">📍 Open in Maps</a>
+      </td>
+      <td style="color:var(--muted);font-size:0.8rem">${langs || '—'}</td>
+      <td style="font-size:0.85rem">${h.max_guests} guest${h.max_guests !== 1 ? 's' : ''}</td>
+      <td><span class="avail-dot ${h.available ? '' : 'no'}">${h.available ? 'Available' : 'Unavailable'}</span></td>
+      <td>
+        <div class="actions-cell" onclick="event.stopPropagation()">
+          <button class="btn btn-ghost btn-sm" onclick="openEdit(${h.id})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteHost(${h.id})">🗑</button>
+        </div>
+      </td>
+    </tr>`
+  }).join('')
+}
+
+// ── VIEW DETAIL ──
+function viewHost(id) {
+  const h = allHosts.find(x => x.id === id)
+  if (!h) return
+  viewingHost = h
+  const c = cultureMap[h.nationality_code] || {}
+  document.getElementById('detailName').textContent = h.full_name
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-section">
+        <div class="detail-label">Nationality</div>
+        <div class="detail-value">${c.flag||''} ${h.nationality}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Status</div>
+        <div class="detail-value"><span class="avail-dot ${h.available?'':'no'}">${h.available?'Available':'Unavailable'}</span></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Email</div>
+        <div class="detail-value">${h.email}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Phone</div>
+        <div class="detail-value">${h.phone || '—'}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Languages</div>
+        <div class="detail-value">${(Array.isArray(h.languages)?h.languages:h.languages?.split(',')||[]).join(', ') || '—'}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Max Guests</div>
+        <div class="detail-value">${h.max_guests}</div>
+      </div>
+    </div>
+    <div class="detail-section" style="margin-top:1rem">
+      <div class="detail-label">Address</div>
+      <div class="detail-value">${h.address}, ${h.city}, ${h.country}</div>
+      <a class="maps-btn" href="${h.maps_url}" target="_blank" style="margin-top:0.4rem;display:inline-block">📍 Open in Google Maps →</a>
+    </div>
+    ${h.bio ? `<div class="detail-section" style="margin-top:1rem"><div class="detail-label">Bio</div><div class="detail-value" style="color:var(--muted)">${h.bio}</div></div>` : ''}
+    <div style="font-size:0.72rem;color:var(--muted);margin-top:1.25rem">Hosting since ${h.hosting_since||'—'} · Joined ${h.created_at?.split('T')[0]||'—'}</div>
+  `
+  document.getElementById('detailEditBtn').onclick = () => { closeDetail(); openEdit(h.id) }
+  document.getElementById('detailDeleteBtn').onclick = () => { closeDetail(); deleteHost(h.id) }
+  document.getElementById('detailOverlay').classList.add('open')
+}
+function closeDetail() { document.getElementById('detailOverlay').classList.remove('open') }
+
+// ── FORM ──
+function openForm(host = null) {
+  editingId = host ? host.id : null
+  document.getElementById('formTitle').textContent = host ? 'Edit Host' : 'Add New Host'
+  const fields = ['first_name','last_name','email','phone','bio','languages','address','city','country','lat','lng','hosting_since','max_guests']
+  fields.forEach(f => { const el = document.getElementById('f_'+f); if(el) el.value = host ? (host[f] ?? '') : (f==='max_guests'?1:'') })
+  if (host) {
+    document.getElementById('f_nationality_code').value = host.nationality_code || ''
+    document.getElementById('f_languages').value = Array.isArray(host.languages) ? host.languages.join(', ') : (host.languages||'')
+    document.getElementById('f_available').checked = host.available !== false
+  } else {
+    document.getElementById('f_nationality_code').value = ''
+    document.getElementById('f_available').checked = true
+  }
+  document.getElementById('formOverlay').classList.add('open')
+}
+function openEdit(id) { openForm(allHosts.find(h => h.id === id)) }
+function closeForm() { document.getElementById('formOverlay').classList.remove('open'); editingId = null }
+
+async function submitForm() {
+  const code = document.getElementById('f_nationality_code').value
+  const culture = cultureMap[code]
+  const payload = {
+    first_name:       document.getElementById('f_first_name').value.trim(),
+    last_name:        document.getElementById('f_last_name').value.trim(),
+    email:            document.getElementById('f_email').value.trim(),
+    phone:            document.getElementById('f_phone').value.trim(),
+    bio:              document.getElementById('f_bio').value.trim(),
+    nationality:      culture ? culture.label : code,
+    nationality_code: code,
+    languages:        document.getElementById('f_languages').value.split(',').map(s=>s.trim()).filter(Boolean),
+    address:          document.getElementById('f_address').value.trim(),
+    city:             document.getElementById('f_city').value.trim(),
+    country:          document.getElementById('f_country').value.trim(),
+    lat:              parseFloat(document.getElementById('f_lat').value) || null,
+    lng:              parseFloat(document.getElementById('f_lng').value) || null,
+    hosting_since:    document.getElementById('f_hosting_since').value.trim(),
+    max_guests:       parseInt(document.getElementById('f_max_guests').value) || 1,
+    available:        document.getElementById('f_available').checked,
+  }
+
+  if (!payload.first_name || !payload.last_name || !payload.email || !payload.nationality_code || !payload.address || !payload.city || !payload.country) {
+    showToast('Please fill in all required fields.', true); return
+  }
+
+  try {
+    const url = editingId ? `${API}/hosts/${editingId}` : `${API}/hosts`
+    const method = editingId ? 'PUT' : 'POST'
+    const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+    if (!res.ok) { const e = await res.json(); showToast(e.error || 'Error saving host', true); return }
+    closeForm()
+    showToast(editingId ? 'Host updated ✓' : 'Host added ✓')
+    loadHosts()
+  } catch { showToast('Cannot reach backend.', true) }
+}
+
+// ── DELETE ──
+async function deleteHost(id) {
+  if (!confirm('Delete this host? This cannot be undone.')) return
+  try {
+    await fetch(`${API}/hosts/${id}`, { method: 'DELETE' })
+    showToast('Host deleted')
+    loadHosts()
+  } catch { showToast('Delete failed', true) }
+}
+
+// ── SEED ──
+async function seedData() {
+  try {
+    const res = await fetch(`${API}/seed`, { method:'POST' })
+    const data = await res.json()
+    showToast(data.message)
+    loadHosts()
+  } catch { showToast('Cannot reach backend.', true) }
+}
+
+// ── HELPERS ──
+function closeIfOutside(e, id) { if (e.target.id === id) document.getElementById(id).classList.remove('open') }
+
+function showToast(msg, error = false) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.className = 'toast show' + (error ? ' error' : '')
+  setTimeout(() => t.className = 'toast', 3000)
+}
+
+// ── INIT ──
+loadHosts()
+</script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HomeAway — Traveller Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0e0c0a; --surface: #141210; --card: #1a1714;
+      --border: #2a2420; --accent: #d4763b; --gold: #c9a84c;
+      --text: #f0e8dc; --muted: #7a6a5a; --soft: #2e2620;
+      --green: #4caf7d; --red: #e05252;
+    }
+    body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+    nav { padding: 1rem 2rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--surface); }
+    .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 300; text-decoration: none; color: var(--text); }
+    .nav-logo em { font-style: italic; color: var(--accent); }
+
+    .page { flex: 1; display: flex; align-items: center; justify-content: center; padding: 3rem 1.5rem; }
+
+    .auth-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 2.5rem; width: 100%; max-width: 420px;
+      animation: rise 0.5s ease both;
+    }
+    @keyframes rise { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    .auth-header { text-align: center; margin-bottom: 2rem; }
+    .auth-header .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .auth-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 300; margin-bottom: 0.3rem; }
+    .auth-header h1 em { font-style: italic; color: var(--accent); }
+    .auth-header p { font-size: 0.82rem; color: var(--muted); }
+
+    .auth-tabs { display: flex; background: var(--surface); border-radius: 10px; padding: 3px; margin-bottom: 1.75rem; gap: 3px; }
+    .auth-tab { flex: 1; padding: 0.55rem; text-align: center; border-radius: 8px; font-size: 0.82rem; font-weight: 500; cursor: pointer; color: var(--muted); transition: all 0.15s; border: none; background: none; font-family: 'Outfit', sans-serif; }
+    .auth-tab.active { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group label { display: block; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.45rem; }
+    .form-group input, .form-group select {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-family: 'Outfit', sans-serif;
+      font-size: 0.88rem; padding: 0.75rem 1rem; outline: none; transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+    .form-group select option { background: var(--card); }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+    .submit-btn { width: 100%; padding: 0.9rem; background: var(--accent); color: white; border: none; border-radius: 10px; font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: background 0.15s; margin-top: 0.5rem; }
+    .submit-btn:hover { background: #be6530; }
+    .submit-btn:disabled { background: var(--soft); color: var(--muted); cursor: not-allowed; }
+
+    .error-msg { background: rgba(224,82,82,0.1); border: 1px solid rgba(224,82,82,0.3); border-radius: 8px; padding: 0.65rem 0.9rem; font-size: 0.8rem; color: var(--red); margin-bottom: 1rem; display: none; }
+    .error-msg.show { display: block; }
+
+    .divider { text-align: center; font-size: 0.72rem; color: var(--muted); margin: 1.25rem 0; }
+
+    .back-link { display: block; text-align: center; font-size: 0.78rem; color: var(--muted); text-decoration: none; margin-top: 1.25rem; transition: color 0.15s; }
+    .back-link:hover { color: var(--accent); }
+
+    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: 10px; padding: 0.8rem 1.1rem; font-size: 0.82rem; z-index: 999; transform: translateY(60px); opacity: 0; transition: all 0.3s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { border-left-color: var(--red); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">🇫🇷 Home<em>Away</em></a>
+</nav>
+
+<div class="page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="icon">✈️</div>
+      <h1><span data-fr="Espace" data-en="Traveller">Espace</span> <em><span data-fr="Voyageur" data-en="Portal">Voyageur</span></em></h1>
+      <p><span data-fr="Connectez-vous pour laisser des avis sur les hôtes" data-en="Log in to leave reviews on hosts">Connectez-vous pour laisser des avis sur les hôtes</span></p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="showTab('login', this)"><span data-fr="Se connecter" data-en="Log in">Se connecter</span></button>
+      <button class="auth-tab" onclick="showTab('register', this)"><span data-fr="S'inscrire" data-en="Register">S'inscrire</span></button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="tab-login">
+      <div class="error-msg" id="loginError"></div>
+      <div class="form-group">
+        <label><span data-fr="Email" data-en="Email">Email</span></label>
+        <input type="email" id="loginEmail" placeholder="votre@email.com"/>
+      </div>
+      <div class="form-group">
+        <label><span data-fr="Mot de passe" data-en="Password">Mot de passe</span></label>
+        <input type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <button class="submit-btn" onclick="doLogin()" id="loginBtn"><span data-fr="Se connecter" data-en="Log in">Se connecter</span></button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="tab-register" style="display:none">
+      <div class="error-msg" id="registerError"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label><span data-fr="Prénom" data-en="First name">Prénom</span></label>
+          <input type="text" id="regFirst" placeholder="Prénom"/>
+        </div>
+        <div class="form-group">
+          <label><span data-fr="Nom" data-en="Last name">Nom</span></label>
+          <input type="text" id="regLast" placeholder="Nom"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label><span data-fr="Email" data-en="Email">Email</span></label>
+        <input type="email" id="regEmail" placeholder="votre@email.com"/>
+      </div>
+      <div class="form-group">
+        <label><span data-fr="Mot de passe" data-en="Password">Mot de passe</span></label>
+        <input type="password" id="regPassword" placeholder="Min. 6 caractères"/>
+      </div>
+      <div class="form-group">
+        <label><span data-fr="Nationalité (optionnel)" data-en="Nationality (optional)">Nationalité (optionnel)</span></label>
+        <select id="regNat">
+          <option value="">— Sélectionner —</option>
+          <option>Indian</option><option>Chinese</option><option>Japanese</option>
+          <option>Vietnamese</option><option>Turkish</option><option>Nigerian</option>
+          <option>Ghanaian</option><option>Korean</option><option>Pakistani</option>
+          <option>Egyptian</option><option>Brazilian</option><option>Filipino</option>
+          <option>Italian</option><option>Mexican</option><option>Thai</option>
+          <option>French</option><option>Other</option>
+        </select>
+      </div>
+      <button class="submit-btn" onclick="doRegister()" id="registerBtn"><span data-fr="Créer un compte" data-en="Create account">Créer un compte</span></button>
+    </div>
+
+    <a href="traveller_map.html" class="back-link"><span data-fr="← Retour à la carte" data-en="← Back to map">← Retour à la carte</span></a>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:5000/api'
+const params = new URLSearchParams(window.location.search)
+const redirect = params.get('redirect') || 'traveller_map.html'
+
+// If already logged in, redirect
+if (localStorage.getItem('traveller_token')) {
+  window.location.href = redirect
+}
+
+function showTab(name, el) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'))
+  el.classList.add('active')
+  document.getElementById('tab-login').style.display = name === 'login' ? 'block' : 'none'
+  document.getElementById('tab-register').style.display = name === 'register' ? 'block' : 'none'
+}
+
+async function doLogin() {
+  const email    = document.getElementById('loginEmail').value.trim()
+  const password = document.getElementById('loginPassword').value
+  const errEl    = document.getElementById('loginError')
+  const btn      = document.getElementById('loginBtn')
+
+  if (!email || !password) { showErr(errEl, 'Email et mot de passe requis'); return }
+  btn.disabled = true; btn.textContent = 'Connexion…'
+
+  try {
+    const res  = await fetch(`${API}/traveller/login`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password })
+    })
+    const data = await res.json()
+    if (!res.ok) { showErr(errEl, data.error || 'Erreur'); btn.disabled = false; btn.textContent = 'Se connecter'; return }
+    localStorage.setItem('traveller_token', data.token)
+    localStorage.setItem('traveller_info', JSON.stringify(data.traveller))
+    showToast(`Bienvenue, ${data.traveller.first_name} ! 👋`)
+    setTimeout(() => window.location.href = redirect, 800)
+  } catch { showErr(errEl, 'Impossible de joindre le backend'); btn.disabled = false; btn.textContent = 'Se connecter' }
+}
+
+async function doRegister() {
+  const first    = document.getElementById('regFirst').value.trim()
+  const last     = document.getElementById('regLast').value.trim()
+  const email    = document.getElementById('regEmail').value.trim()
+  const password = document.getElementById('regPassword').value
+  const nat      = document.getElementById('regNat').value
+  const errEl    = document.getElementById('registerError')
+  const btn      = document.getElementById('registerBtn')
+
+  if (!first || !last || !email || !password) { showErr(errEl, 'Tous les champs obligatoires'); return }
+  if (password.length < 6) { showErr(errEl, 'Mot de passe trop court (min. 6)'); return }
+  btn.disabled = true; btn.textContent = 'Création…'
+
+  try {
+    const res  = await fetch(`${API}/traveller/register`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password, first_name: first, last_name: last, nationality: nat })
+    })
+    const data = await res.json()
+    if (!res.ok) { showErr(errEl, data.error || 'Erreur'); btn.disabled = false; btn.textContent = 'Créer un compte'; return }
+    localStorage.setItem('traveller_token', data.token)
+    localStorage.setItem('traveller_info', JSON.stringify(data.traveller))
+    showToast(`Compte créé ! Bienvenue ${data.traveller.first_name} 🎉`)
+    setTimeout(() => window.location.href = redirect, 800)
+  } catch { showErr(errEl, 'Impossible de joindre le backend'); btn.disabled = false; btn.textContent = 'Créer un compte' }
+}
+
+function showErr(el, msg) { el.textContent = msg; el.classList.add('show') }
+
+function showToast(msg) {
+  const t = document.getElementById('toast')
+  t.textContent = msg; t.className = 'toast show'
+  setTimeout(() => t.className = 'toast', 3000)
+}
+</script>
+<script src="lang.js"></script>
+<script>document.addEventListener("DOMContentLoaded",()=>HomeAwayLang.injectLangToggle("nav"))</script>
+</body>
+</html>

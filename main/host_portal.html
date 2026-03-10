@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HomeAway — Host Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0e0c0a; --surface: #141210; --card: #1a1714;
+      --border: #2a2420; --accent: #d4763b; --gold: #c9a84c;
+      --text: #f0e8dc; --muted: #7a6a5a; --soft: #2e2620;
+      --green: #4caf7d; --red: #e05252;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── PAGES ── */
+    .page { display: none; min-height: 100vh; }
+    .page.active { display: block; }
+
+    /* ── AUTH PAGE ── */
+    .auth-page {
+      display: none;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      background:
+        radial-gradient(ellipse at 20% 60%, rgba(212,118,59,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 20%, rgba(201,168,76,0.05) 0%, transparent 50%),
+        var(--bg);
+    }
+    .auth-page.active { display: flex; }
+
+    .auth-box {
+      width: 100%; max-width: 420px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      animation: popIn 0.3s ease;
+    }
+    @keyframes popIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+    .auth-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem;
+      font-weight: 300;
+      text-align: center;
+      margin-bottom: 0.25rem;
+    }
+    .auth-logo em { font-style: italic; color: var(--accent); }
+    .auth-tagline { text-align: center; font-size: 0.78rem; color: var(--muted); margin-bottom: 2rem; }
+
+    .auth-tabs {
+      display: flex;
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 3px;
+      margin-bottom: 1.75rem;
+      border: 1px solid var(--border);
+    }
+    .auth-tab {
+      flex: 1; padding: 0.55rem; border: none; background: none;
+      font-family: 'Outfit', sans-serif; font-size: 0.82rem;
+      color: var(--muted); cursor: pointer; border-radius: 8px;
+      transition: all 0.15s;
+    }
+    .auth-tab.active { background: var(--accent); color: white; }
+
+    /* ── FORMS ── */
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+    .field input, .field textarea, .field select {
+      width: 100%; padding: 0.75rem 1rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      font-family: 'Outfit', sans-serif; font-size: 0.88rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field .hint { font-size: 0.72rem; color: var(--muted); margin-top: 0.3rem; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+    .form-grid .full { grid-column: 1/-1; }
+
+    .section-sep {
+      font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--accent); border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem; margin: 1.25rem 0 1rem;
+      grid-column: 1/-1;
+    }
+
+    /* ── BUTTONS ── */
+    .btn { padding: 0.7rem 1.4rem; border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .btn-primary { background: var(--accent); color: white; width: 100%; justify-content: center; }
+    .btn-primary:hover { background: #be6530; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(224,82,82,0.3); }
+    .btn-danger:hover { background: rgba(224,82,82,0.1); }
+    .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.78rem; }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .err-msg { font-size: 0.8rem; color: var(--red); margin-top: 0.75rem; text-align: center; min-height: 1.2em; }
+
+    /* ── DASHBOARD ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 1.1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(14,12,10,0.93);
+      backdrop-filter: blur(12px);
+    }
+    .logo { font-family: 'Cormorant Garamond', serif; font-size: 1.45rem; font-weight: 300; }
+    .logo em { font-style: italic; color: var(--accent); }
+    .user-pill {
+      display: flex; align-items: center; gap: 0.75rem;
+      font-size: 0.82rem; color: var(--muted);
+    }
+    .user-pill .dot {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--soft); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; color: var(--accent);
+    }
+
+    .container { max-width: 860px; margin: 0 auto; padding: 2.5rem 2rem; }
+
+    /* ── WELCOME BANNER ── */
+    .welcome {
+      background: linear-gradient(135deg, var(--card), var(--soft));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .welcome h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 300; }
+    .welcome h2 em { font-style: italic; color: var(--accent); }
+    .welcome p { font-size: 0.85rem; color: var(--muted); margin-top: 0.3rem; }
+
+    /* ── PROFILE CARD ── */
+    .profile-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .profile-card h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem; font-weight: 300;
+      margin-bottom: 1.5rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    .profile-view { display: block; }
+    .profile-form { display: none; }
+
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .detail-item .lbl { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.25rem; }
+    .detail-item .val { font-size: 0.9rem; color: var(--text); line-height: 1.5; }
+    .detail-item.full { grid-column: 1/-1; }
+
+    .flag-pill {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      background: var(--soft); border-radius: 2rem;
+      padding: 0.25rem 0.75rem; font-size: 0.82rem;
+    }
+    .avail-badge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.78rem;
+    }
+    .avail-badge::before {
+      content: ''; width: 7px; height: 7px;
+      border-radius: 50%; background: var(--green);
+    }
+    .avail-badge.no::before { background: var(--muted); }
+
+    .maps-link {
+      font-size: 0.78rem; color: var(--accent);
+      text-decoration: none; border-bottom: 1px solid rgba(212,118,59,0.3);
+    }
+
+    .card-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+
+    /* no profile state */
+    .no-profile {
+      text-align: center; padding: 3rem;
+    }
+    .no-profile .big { font-size: 3rem; margin-bottom: 1rem; }
+    .no-profile p { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+    /* toggle */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+    .toggle-row span { font-size: 0.85rem; }
+    .toggle { position: relative; width: 44px; height: 24px; }
+    .toggle input { opacity:0; width:0; height:0; }
+    .slider { position:absolute; inset:0; background:var(--border); border-radius:24px; cursor:pointer; transition:background 0.2s; }
+    .slider::before { content:''; position:absolute; width:18px; height:18px; left:3px; top:3px; background:white; border-radius:50%; transition:transform 0.2s; }
+    .toggle input:checked + .slider { background: var(--green); }
+    .toggle input:checked + .slider::before { transform: translateX(20px); }
+
+    /* toast */
+    .toast { position:fixed; bottom:2rem; right:2rem; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--green); border-radius:10px; padding:0.9rem 1.25rem; font-size:0.85rem; z-index:999; transform:translateY(80px); opacity:0; transition:all 0.3s ease; max-width:300px; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.error { border-left-color: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- ── AUTH PAGE ── -->
+<div class="auth-page active" id="authPage">
+  <div class="auth-box">
+    <div class="auth-logo">Home<em>Away</em></div>
+    <div class="auth-tagline">Host Portal — manage your profile</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginForm">
+      <div class="field"><label>Email</label><input id="l_email" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="field"><label>Password</label><input id="l_password" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="err-msg" id="loginErr"></div>
+      <button class="btn btn-primary" onclick="doLogin()" style="margin-top:0.5rem" id="loginBtn">Sign In</button>
+      <p style="text-align:center;font-size:0.75rem;color:var(--muted);margin-top:1rem">
+        Demo admin: <strong style="color:var(--text)">admin@homeaway.com</strong> / <strong style="color:var(--text)">admin123</strong>
+      </p>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerForm" style="display:none">
+      <div class="field"><label>Email</label><input id="r_email" type="email" placeholder="you@example.com"/></div>
+      <div class="field"><label>Password</label><input id="r_password" type="password" placeholder="At least 6 characters"/></div>
+      <div class="field"><label>Confirm Password</label><input id="r_confirm" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()"/></div>
+      <div class="err-msg" id="registerErr"></div>
+      <button class="btn btn-primary" onclick="doRegister()" style="margin-top:0.5rem" id="registerBtn">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DASHBOARD PAGE ── -->
+<div class="page" id="dashPage">
+  <header>
+    <div class="logo">Home<em>Away</em> <span style="font-size:0.75rem;color:var(--muted);font-family:'Outfit',sans-serif;font-weight:300">Host Portal</span></div>
+    <div class="user-pill">
+      <span id="headerEmail"></span>
+      <div class="dot" id="headerInitial">?</div>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Sign Out</button>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- WELCOME -->
+    <div class="welcome">
+      <div>
+        <h2>Welcome back, <em id="welcomeName">Host</em></h2>
+        <p id="welcomeSub">Manage your hosting profile below.</p>
+      </div>
+    </div>
+
+    <!-- PROFILE CARD -->
+    <div class="profile-card" id="profileCard">
+
+      <!-- NO PROFILE -->
+      <div id="noProfile" class="no-profile">
+        <div class="big">🏠</div>
+        <p>You haven't created a host profile yet.<br/>Set one up so travellers can find you!</p>
+        <button class="btn btn-primary" style="width:auto;margin:0 auto" onclick="showProfileForm(false)">+ Create Profile</button>
+      </div>
+
+      <!-- VIEW PROFILE -->
+      <div id="viewProfile" class="profile-view" style="display:none">
+        <h3>🌍 My Host Profile</h3>
+        <div class="detail-grid" id="profileDetails"></div>
+        <div class="card-actions">
+          <button class="btn btn-ghost" onclick="showProfileForm(true)">✏️ Edit Profile</button>
+          <button class="btn btn-danger" onclick="deleteProfile()">🗑 Delete Profile</button>
+        </div>
+      </div>
+
+      <!-- PROFILE FORM -->
+      <div id="editProfile" class="profile-form">
+        <h3 id="formHeading">✏️ Edit Profile</h3>
+        <div class="form-grid">
+          <div class="section-sep full">Personal Details</div>
+          <div class="field"><label>First Name *</label><input id="p_first_name" placeholder="Priya"/></div>
+          <div class="field"><label>Last Name *</label><input id="p_last_name" placeholder="Sharma"/></div>
+          <div class="field"><label>Phone</label><input id="p_phone" placeholder="+44 7700 900000"/></div>
+          <div class="field full"><label>Bio</label><textarea id="p_bio" placeholder="Tell travellers about yourself…"></textarea></div>
+
+          <div class="section-sep full">Nationality & Culture</div>
+          <div class="field">
+            <label>Nationality *</label>
+            <select id="p_nationality_code">
+              <option value="">Select…</option>
+            </select>
+          </div>
+          <div class="field"><label>Languages (comma-separated)</label><input id="p_languages" placeholder="Hindi, English"/></div>
+
+          <div class="section-sep full">Location</div>
+          <div class="field full"><label>Street Address *</label><input id="p_address" placeholder="14 Brick Lane"/></div>
+          <div class="field"><label>City *</label><input id="p_city" placeholder="London"/></div>
+          <div class="field"><label>Country *</label><input id="p_country" placeholder="UK"/></div>
+
+          <div class="section-sep full">Hosting Preferences</div>
+          <div class="field"><label>Hosting Since</label><input id="p_hosting_since" placeholder="2022"/></div>
+          <div class="field"><label>Max Guests</label><input id="p_max_guests" type="number" min="1" value="1"/></div>
+          <div class="field full">
+            <div class="toggle-row">
+              <span>Available to host</span>
+              <label class="toggle"><input type="checkbox" id="p_available" checked/><span class="slider"></span></label>
+            </div>
+          </div>
+
+          <div class="full" style="display:flex;gap:0.75rem;margin-top:0.5rem">
+            <button class="btn btn-ghost" onclick="cancelEdit()" id="cancelEditBtn">Cancel</button>
+            <button class="btn btn-primary" style="flex:1" onclick="saveProfile()" id="saveBtn">Save Profile</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:5000/api'
+
+const CULTURES = [
+  {code:'IN',label:'Indian',flag:'🇮🇳'},{code:'CN',label:'Chinese',flag:'🇨🇳'},
+  {code:'JP',label:'Japanese',flag:'🇯🇵'},{code:'MX',label:'Mexican',flag:'🇲🇽'},
+  {code:'NG',label:'Nigerian',flag:'🇳🇬'},{code:'KR',label:'Korean',flag:'🇰🇷'},
+  {code:'IT',label:'Italian',flag:'🇮🇹'},{code:'TR',label:'Turkish',flag:'🇹🇷'},
+  {code:'PH',label:'Filipino',flag:'🇵🇭'},{code:'BR',label:'Brazilian',flag:'🇧🇷'},
+  {code:'VN',label:'Vietnamese',flag:'🇻🇳'},{code:'TH',label:'Thai',flag:'🇹🇭'},
+  {code:'EG',label:'Egyptian',flag:'🇪🇬'},{code:'PK',label:'Pakistani',flag:'🇵🇰'},
+  {code:'ET',label:'Ethiopian',flag:'🇪🇹'},{code:'GH',label:'Ghanaian',flag:'🇬🇭'},
+]
+const cultureMap = Object.fromEntries(CULTURES.map(c => [c.code, c]))
+
+// Populate nationality selects
+const pNat = document.getElementById('p_nationality_code')
+CULTURES.forEach(c => { pNat.innerHTML += `<option value="${c.code}">${c.flag} ${c.label}</option>` })
+
+// ── STATE ──
+let token = localStorage.getItem('ha_token') || null
+let currentUser = null
+let hasProfile = false
+
+// ── INIT ──
+if (token) loadMe()
+
+// ── AUTH TAB SWITCH ──
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')))
+  document.getElementById('loginForm').style.display    = tab === 'login'    ? 'block' : 'none'
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none'
+}
+
+// ── LOGIN ──
+async function doLogin() {
+  const email    = document.getElementById('l_email').value.trim()
+  const password = document.getElementById('l_password').value
+  const btn      = document.getElementById('loginBtn')
+  const err      = document.getElementById('loginErr')
+  err.textContent = ''
+  if (!email || !password) { err.textContent = 'Please enter email and password.'; return }
+
+  btn.disabled = true; btn.textContent = 'Signing in…'
+  try {
+    const res  = await fetch(`${API}/auth/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email, password}) })
+    const data = await res.json()
+    if (!res.ok) { err.textContent = data.error; return }
+    token = data.token
+    localStorage.setItem('ha_token', token)
+    currentUser = data.user
+    showDashboard(data.user)
+  } catch { err.textContent = 'Cannot reach backend — is Flask running?' }
+  finally { btn.disabled = false; btn.textContent = 'Sign In' }
+}
+
+// ── REGISTER ──
+async function doRegister() {
+  const email    = document.getElementById('r_email').value.trim()
+  const password = document.getElementById('r_password').value
+  const confirm  = document.getElementById('r_confirm').value
+  const btn      = document.getElementById('registerBtn')
+  const err      = document.getElementById('registerErr')
+  err.textContent = ''
+
+  if (!email || !password) { err.textContent = 'Please fill in all fields.'; return }
+  if (password !== confirm) { err.textContent = 'Passwords do not match.'; return }
+  if (password.length < 6)  { err.textContent = 'Password must be at least 6 characters.'; return }
+
+  btn.disabled = true; btn.textContent = 'Creating account…'
+  try {
+    const res  = await fetch(`${API}/auth/register`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email, password}) })
+    const data = await res.json()
+    if (!res.ok) { err.textContent = data.error; return }
+    token = data.token
+    localStorage.setItem('ha_token', token)
+    currentUser = data.user
+    showDashboard(data.user)
+  } catch { err.textContent = 'Cannot reach backend — is Flask running?' }
+  finally { btn.disabled = false; btn.textContent = 'Create Account' }
+}
+
+// ── LOAD ME ──
+async function loadMe() {
+  try {
+    const res  = await fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+    if (!res.ok) { logout(); return }
+    const data = await res.json()
+    currentUser = data
+    showDashboard(data)
+  } catch { logout() }
+}
+
+// ── SHOW DASHBOARD ──
+function showDashboard(user) {
+  document.getElementById('authPage').classList.remove('active')
+  document.getElementById('dashPage').classList.add('active')
+
+  const initials = user.email[0].toUpperCase()
+  document.getElementById('headerEmail').textContent = user.email
+  document.getElementById('headerInitial').textContent = initials
+  document.getElementById('welcomeName').textContent = user.email.split('@')[0]
+
+  if (user.has_profile || user.profile) {
+    showProfileView(user.profile || null)
+    if (!user.profile) loadProfile()
+  } else {
+    showNoProfile()
+  }
+}
+
+async function loadProfile() {
+  try {
+    const res  = await fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+    const data = await res.json()
+    if (data.profile) showProfileView(data.profile)
+    else showNoProfile()
+  } catch {}
+}
+
+// ── PROFILE STATES ──
+function showNoProfile() {
+  hasProfile = false
+  document.getElementById('noProfile').style.display = 'block'
+  document.getElementById('viewProfile').style.display = 'none'
+  document.getElementById('editProfile').style.display = 'none'
+  document.getElementById('welcomeSub').textContent = 'Create your host profile to appear on the map.'
+}
+
+function showProfileView(profile) {
+  if (!profile) { loadProfile(); return }
+  hasProfile = true
+  document.getElementById('noProfile').style.display = 'none'
+  document.getElementById('viewProfile').style.display = 'block'
+  document.getElementById('editProfile').style.display = 'none'
+
+  const c = cultureMap[profile.nationality_code] || {}
+  const langs = Array.isArray(profile.languages) ? profile.languages.join(', ') : (profile.languages || '—')
+
+  document.getElementById('profileDetails').innerHTML = `
+    <div class="detail-item">
+      <div class="lbl">Full Name</div>
+      <div class="val">${profile.full_name}</div>
+    </div>
+    <div class="detail-item">
+      <div class="lbl">Nationality</div>
+      <div class="val"><span class="flag-pill">${c.flag||'🌐'} ${profile.nationality}</span></div>
+    </div>
+    <div class="detail-item">
+      <div class="lbl">Phone</div>
+      <div class="val">${profile.phone || '—'}</div>
+    </div>
+    <div class="detail-item">
+      <div class="lbl">Languages</div>
+      <div class="val">${langs}</div>
+    </div>
+    <div class="detail-item full">
+      <div class="lbl">Address</div>
+      <div class="val">${profile.address}, ${profile.city}, ${profile.country}</div>
+      <a class="maps-link" href="${profile.maps_url}" target="_blank" style="display:inline-block;margin-top:0.3rem">📍 Open in Google Maps →</a>
+    </div>
+    ${profile.bio ? `<div class="detail-item full"><div class="lbl">Bio</div><div class="val" style="color:var(--muted)">${profile.bio}</div></div>` : ''}
+    <div class="detail-item">
+      <div class="lbl">Max Guests</div>
+      <div class="val">${profile.max_guests}</div>
+    </div>
+    <div class="detail-item">
+      <div class="lbl">Availability</div>
+      <div class="val"><span class="avail-badge ${profile.available?'':'no'}">${profile.available?'Available':'Unavailable'}</span></div>
+    </div>
+  `
+  document.getElementById('welcomeSub').textContent = `Your profile is ${profile.available ? 'live and visible to travellers 🟢' : 'currently hidden 🔴'}`
+}
+
+function showProfileForm(editing) {
+  document.getElementById('noProfile').style.display = 'none'
+  document.getElementById('viewProfile').style.display = 'none'
+  document.getElementById('editProfile').style.display = 'block'
+  document.getElementById('formHeading').textContent = editing ? '✏️ Edit Profile' : '🏠 Create Profile'
+  document.getElementById('cancelEditBtn').style.display = editing ? 'flex' : 'none'
+
+  if (editing) {
+    // prefill form from current profile data
+    fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json()).then(data => {
+        const p = data.profile
+        if (!p) return
+        const fields = ['first_name','last_name','phone','bio','address','city','country','hosting_since','max_guests']
+        fields.forEach(f => { const el = document.getElementById('p_'+f); if(el) el.value = p[f] || '' })
+        document.getElementById('p_nationality_code').value = p.nationality_code || ''
+        document.getElementById('p_languages').value = Array.isArray(p.languages) ? p.languages.join(', ') : (p.languages||'')
+        document.getElementById('p_available').checked = p.available !== false
+      })
+  }
+}
+
+function cancelEdit() {
+  loadProfile()
+}
+
+// ── SAVE PROFILE ──
+async function saveProfile() {
+  const code = document.getElementById('p_nationality_code').value
+  const culture = cultureMap[code]
+
+  const payload = {
+    first_name:       document.getElementById('p_first_name').value.trim(),
+    last_name:        document.getElementById('p_last_name').value.trim(),
+    phone:            document.getElementById('p_phone').value.trim(),
+    bio:              document.getElementById('p_bio').value.trim(),
+    nationality:      culture ? culture.label : code,
+    nationality_code: code,
+    languages:        document.getElementById('p_languages').value.split(',').map(s=>s.trim()).filter(Boolean),
+    address:          document.getElementById('p_address').value.trim(),
+    city:             document.getElementById('p_city').value.trim(),
+    country:          document.getElementById('p_country').value.trim(),
+    hosting_since:    document.getElementById('p_hosting_since').value.trim(),
+    max_guests:       parseInt(document.getElementById('p_max_guests').value) || 1,
+    available:        document.getElementById('p_available').checked,
+  }
+
+  if (!payload.first_name || !payload.last_name || !payload.nationality_code || !payload.address || !payload.city || !payload.country) {
+    showToast('Please fill in all required fields.', true); return
+  }
+
+  const btn = document.getElementById('saveBtn')
+  btn.disabled = true; btn.textContent = 'Saving…'
+
+  try {
+    const method = hasProfile ? 'PUT' : 'POST'
+    const res = await fetch(`${API}/profile`, {
+      method,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload)
+    })
+    const data = await res.json()
+    if (!res.ok) { showToast(data.error || 'Error saving', true); return }
+    showToast(hasProfile ? 'Profile updated ✓' : 'Profile created ✓')
+    showProfileView(data)
+    hasProfile = true
+  } catch { showToast('Cannot reach backend.', true) }
+  finally { btn.disabled = false; btn.textContent = 'Save Profile' }
+}
+
+// ── DELETE PROFILE ──
+async function deleteProfile() {
+  if (!confirm('Delete your host profile? You can recreate it anytime.')) return
+  try {
+    await fetch(`${API}/profile`, { method:'DELETE', headers:{ Authorization: `Bearer ${token}` } })
+    showToast('Profile deleted')
+    showNoProfile()
+  } catch { showToast('Delete failed', true) }
+}
+
+// ── LOGOUT ──
+function logout() {
+  localStorage.removeItem('ha_token')
+  token = null; currentUser = null
+  document.getElementById('dashPage').classList.remove('active')
+  document.getElementById('authPage').classList.add('active')
+  document.getElementById('loginErr').textContent = ''
+  document.getElementById('l_email').value = ''
+  document.getElementById('l_password').value = ''
+}
+
+// ── TOAST ──
+function showToast(msg, error=false) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.className = 'toast show' + (error ? ' error' : '')
+  setTimeout(() => t.className = 'toast', 3000)
+}
+</script>
+</body>
+</html>

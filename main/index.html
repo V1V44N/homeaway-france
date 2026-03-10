@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HomeAway France</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0906;
+      --surface: #111009;
+      --card: #191510;
+      --border: #26211a;
+      --accent: #d4763b;
+      --gold: #c9a84c;
+      --blue: #002395;
+      --red: #ED2939;
+      --text: #f2e8d8;
+      --muted: #7a6a55;
+      --soft: #2a2218;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 1.1rem 2.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(11,9,6,0); transition: background 0.4s, border-bottom 0.4s;
+    }
+    nav.scrolled {
+      background: rgba(11,9,6,0.95);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem; font-weight: 300;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .nav-logo em { font-style: italic; color: var(--accent); }
+    .nav-links { display: flex; gap: 0.5rem; align-items: center; }
+    .nav-link {
+      padding: 0.45rem 0.9rem; border-radius: 7px;
+      font-size: 0.8rem; font-weight: 400; color: var(--muted);
+      text-decoration: none; transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--text); }
+    .nav-cta {
+      padding: 0.45rem 1.1rem; border-radius: 7px;
+      background: var(--accent); color: white;
+      font-size: 0.8rem; font-weight: 500;
+      text-decoration: none; transition: background 0.2s;
+    }
+    .nav-cta:hover { background: #be6530; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 6rem 2rem 4rem;
+      position: relative; overflow: hidden;
+    }
+
+    /* France tricolore glow */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 15% 60%, rgba(0,35,149,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 40%, rgba(237,41,57,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 30%, rgba(212,118,59,0.06) 0%, transparent 55%);
+      pointer-events: none;
+    }
+
+    /* grid texture */
+    .hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(212,118,59,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212,118,59,0.025) 1px, transparent 1px);
+      background-size: 80px 80px;
+      pointer-events: none;
+    }
+
+    .hero-inner { position: relative; z-index: 1; max-width: 800px; }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.75rem;
+      font-size: 0.65rem; letter-spacing: 0.35em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 2.5rem;
+      opacity: 0; animation: rise 1s 0.1s forwards;
+    }
+    .hero-eyebrow::before, .hero-eyebrow::after {
+      content: ''; width: 40px; height: 1px;
+      background: linear-gradient(to right, transparent, var(--accent));
+    }
+    .hero-eyebrow::after { background: linear-gradient(to left, transparent, var(--accent)); }
+
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(4rem, 11vw, 9rem);
+      font-weight: 300; line-height: 0.88;
+      letter-spacing: -0.02em;
+      opacity: 0; animation: rise 1s 0.2s forwards;
+    }
+    .hero h1 em { display: block; font-style: italic; color: var(--accent); }
+    .hero h1 .fr { color: var(--muted); font-size: 0.55em; display: block; margin-top: 0.3em; letter-spacing: 0.05em; }
+
+    .hero-sub {
+      margin-top: 2rem; font-size: 1.05rem; font-weight: 300;
+      color: var(--muted); line-height: 1.8; max-width: 500px; margin-inline: auto;
+      opacity: 0; animation: rise 1s 0.35s forwards;
+    }
+
+    .hero-sub strong { color: var(--text); font-weight: 400; }
+
+    .hero-flags {
+      margin-top: 1.75rem; font-size: 1.6rem; letter-spacing: 0.15em;
+      opacity: 0; animation: rise 1s 0.5s forwards;
+    }
+
+    .hero-actions {
+      margin-top: 2.5rem; display: flex; gap: 0.75rem;
+      justify-content: center; flex-wrap: wrap;
+      opacity: 0; animation: rise 1s 0.6s forwards;
+    }
+
+    .btn-hero {
+      padding: 0.85rem 1.75rem; border-radius: 10px;
+      font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 500;
+      text-decoration: none; transition: all 0.2s; display: inline-flex;
+      align-items: center; gap: 0.5rem; border: none; cursor: pointer;
+    }
+    .btn-hero-primary { background: var(--accent); color: white; }
+    .btn-hero-primary:hover { background: #be6530; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(212,118,59,0.3); }
+    .btn-hero-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-hero-ghost:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+
+    .scroll-hint {
+      margin-top: 4rem; display: flex; flex-direction: column;
+      align-items: center; gap: 0.5rem;
+      font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--muted); opacity: 0; animation: rise 1s 0.8s forwards;
+    }
+    .scroll-hint .line {
+      width: 1px; height: 40px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+      animation: drip 2s ease-in-out infinite;
+    }
+    @keyframes drip { 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(1.4)} }
+    @keyframes rise { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── STATS ── */
+    .stats-bar {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: center; flex-wrap: wrap;
+    }
+    .stat-item {
+      padding: 2rem 3rem; text-align: center;
+      border-right: 1px solid var(--border);
+      flex: 1; min-width: 160px;
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.8rem; font-weight: 300; color: var(--accent);
+      line-height: 1;
+    }
+    .stat-lbl { font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem; }
+
+    /* ── SECTION COMMON ── */
+    section { padding: 6rem 2rem; }
+    .section-inner { max-width: 1060px; margin: 0 auto; }
+    .section-tag { font-size: 0.62rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+    .section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 300; margin-bottom: 1rem; line-height: 1.1; }
+    .section-sub { font-size: 0.95rem; color: var(--muted); line-height: 1.8; max-width: 540px; }
+
+    /* ── HOW IT WORKS ── */
+    .how { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; margin-top: 3.5rem; }
+    .step {
+      position: relative;
+      padding: 2rem; background: var(--card);
+      border: 1px solid var(--border); border-radius: 16px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .step:hover { border-color: var(--accent); transform: translateY(-3px); }
+    .step-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 4rem; font-weight: 300; color: var(--border);
+      line-height: 1; margin-bottom: 1rem;
+      position: absolute; top: 1rem; right: 1.25rem;
+    }
+    .step-icon { font-size: 2rem; margin-bottom: 1rem; }
+    .step h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .step p { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── PAGES ── */
+    .pages-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 3.5rem; }
+
+    .page-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; overflow: hidden;
+      text-decoration: none; color: inherit;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      display: flex; flex-direction: column;
+    }
+    .page-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 16px 48px rgba(212,118,59,0.12); }
+
+    .page-card-top {
+      height: 160px; display: flex; align-items: center; justify-content: center;
+      font-size: 3.5rem; position: relative; overflow: hidden;
+    }
+    .page-card-top.traveller { background: linear-gradient(135deg, rgba(0,35,149,0.25), rgba(237,41,57,0.15), var(--soft)); }
+    .page-card-top.brochure  { background: linear-gradient(135deg, rgba(212,118,59,0.2), rgba(201,168,76,0.1), var(--soft)); }
+    .page-card-top.portal    { background: linear-gradient(135deg, rgba(76,175,125,0.15), rgba(212,118,59,0.1), var(--soft)); }
+    .page-card-top.admin     { background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(212,118,59,0.1), var(--soft)); }
+
+    .page-card-body { padding: 1.5rem; flex: 1; display: flex; flex-direction: column; }
+    .page-card-tag { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem; }
+    .page-card-body h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .page-card-body p { font-size: 0.82rem; color: var(--muted); line-height: 1.6; flex: 1; }
+    .page-card-link {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      margin-top: 1.25rem; font-size: 0.8rem; font-weight: 500;
+      color: var(--accent); border-bottom: 1px solid rgba(212,118,59,0.3);
+      padding-bottom: 1px; width: fit-content; transition: border-color 0.2s;
+    }
+    .page-card:hover .page-card-link { border-color: var(--accent); }
+
+    /* ── FOR WHO ── */
+    .forwho { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .forwho-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 3rem; }
+    @media(max-width:640px) { .forwho-grid { grid-template-columns: 1fr; } }
+
+    .forwho-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem;
+    }
+    .forwho-card .emoji { font-size: 2.5rem; margin-bottom: 1rem; }
+    .forwho-card h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 300; margin-bottom: 0.75rem; }
+    .forwho-card h3 em { font-style: italic; color: var(--accent); }
+    .forwho-card ul { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .forwho-card li { font-size: 0.85rem; color: var(--muted); display: flex; align-items: baseline; gap: 0.5rem; }
+    .forwho-card li::before { content: '—'; color: var(--accent); flex-shrink: 0; }
+
+    /* ── NATIONALITIES ── */
+    .nat-section { text-align: center; }
+    .nat-cloud { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-top: 2.5rem; max-width: 700px; margin-inline: auto; }
+    .nat-tag {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 2rem; padding: 0.4rem 1rem;
+      font-size: 0.82rem; color: var(--muted);
+      transition: all 0.15s; cursor: default;
+    }
+    .nat-tag:hover { border-color: var(--accent); color: var(--text); transform: translateY(-2px); }
+
+    /* ── CTA BANNER ── */
+    .cta-banner {
+      background: linear-gradient(135deg, rgba(0,35,149,0.2), rgba(237,41,57,0.12), rgba(212,118,59,0.1));
+      border-top: 1px solid var(--border);
+      text-align: center; padding: 5rem 2rem;
+    }
+    .cta-banner h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 5vw, 4rem); font-weight: 300; margin-bottom: 1rem; }
+    .cta-banner h2 em { font-style: italic; color: var(--accent); }
+    .cta-banner p { color: var(--muted); font-size: 0.95rem; margin-bottom: 2rem; }
+    .cta-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 2.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+      font-size: 0.75rem; color: var(--muted);
+    }
+    .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 300; }
+    .footer-logo em { font-style: italic; color: var(--accent); }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { color: var(--muted); text-decoration: none; transition: color 0.2s; font-size: 0.75rem; }
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ── TRICOLORE DIVIDER ── */
+    .tricolore { display: flex; height: 3px; }
+    .tricolore .b { flex: 1; background: var(--blue); }
+    .tricolore .w { flex: 1; background: #f5f5f0; }
+    .tricolore .r { flex: 1; background: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-logo">🇫🇷 Home<em>Away</em></div>
+  <div class="nav-links">
+    <a href="traveller_map.html" class="nav-link"><span data-fr="Trouver un hôte" data-en="Find a Host">Trouver un hôte</span></a>
+    <a href="homeaway-leaflet.html" class="nav-link"><span data-fr="Carte culturelle" data-en="Cultural Map">Carte culturelle</span></a>
+    <a href="crud.html" class="nav-link"><span data-fr="Annuaire" data-en="Directory">Annuaire</span></a>
+    <a href="host_portal.html" class="nav-cta"><span data-fr="Espace hôte" data-en="Host Portal">Espace hôte</span></a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow"><span data-fr="Bienvenue en France" data-en="Welcome to France">Bienvenue en France</span></div>
+    <h1>
+      Home<em>Away</em>
+      <span class="fr"><span data-fr="Se sentir chez soi, partout en France" data-en="Feel at home, anywhere in France">Se sentir chez soi, partout en France</span></span>
+    </h1>
+    <p class="hero-sub">
+      Connect with <strong>hosts who share your culture</strong>, find familiar restaurants, groceries and community spaces — anywhere in France.
+      <br/><em style="font-size:0.9em;color:var(--muted)">Connectez-vous avec des hôtes qui partagent votre culture.</em>
+    </p>
+    <div class="hero-flags">🇮🇳 🇨🇳 🇻🇳 🇹🇷 🇳🇬 🇯🇵 🇰🇷 🇵🇰 🇪🇬 🇧🇷 🇵🇭 🇬🇭</div>
+    <div class="hero-actions">
+      <a href="traveller_map.html" class="btn-hero btn-hero-primary">🗺️ Find a Host</a>
+      <a href="homeaway-leaflet.html" class="btn-hero btn-hero-ghost">🍽️ Cultural Map</a>
+      <a href="host_portal.html" class="btn-hero btn-hero-ghost">🏠 Become a Host</a>
+    </div>
+    <div class="scroll-hint">
+      <div class="line"></div>
+      Découvrir
+    </div>
+  </div>
+</section>
+
+<!-- TRICOLORE -->
+<div class="tricolore"><div class="b"></div><div class="w"></div><div class="r"></div></div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat-item"><div class="stat-num" id="statHosts">—</div><div class="stat-lbl"><span data-fr="Hôtes en France" data-en="Hosts in France">Hôtes en France</span></div></div>
+  <div class="stat-item"><div class="stat-num" id="statNat">16</div><div class="stat-lbl"><span data-fr="Nationalités" data-en="Nationalities">Nationalités</span></div></div>
+  <div class="stat-item"><div class="stat-num">9</div><div class="stat-lbl"><span data-fr="Villes" data-en="Cities">Villes</span></div></div>
+  <div class="stat-item"><div class="stat-num" id="statAvail">—</div><div class="stat-lbl"><span data-fr="Disponibles" data-en="Available">Disponibles</span></div></div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="how">
+  <div class="section-inner">
+    <div class="section-tag"><span data-fr="Comment ça marche" data-en="How it works">Comment ça marche</span></div>
+    <h2 class="section-title">Simple. Cultural. <em style="font-style:italic;color:var(--accent)">Personal.</em></h2>
+    <p class="section-sub">Whether you are a traveller arriving in France or a host opening your home, HomeAway connects you through shared culture.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-icon">🌍</div>
+        <h3>Choose your culture</h3>
+        <p>Select your nationality. We match you with hosts and places that share your background, language, and traditions.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-icon">🗺️</div>
+        <h3>Find hosts on the map</h3>
+        <p>Browse real hosts across France — flag pins show where they live. Click to see their bio, languages, and availability.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-icon">🍽️</div>
+        <h3>Discover familiar places</h3>
+        <p>The cultural map finds nearby restaurants, groceries, temples and community centres that match your culture.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-icon">🏠</div>
+        <h3>Register as a host</h3>
+        <p>Are you an expat or French local? Create a profile and help travellers feel at home in your city.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PAGES -->
+<section>
+  <div class="section-inner">
+    <div class="section-tag"><span data-fr="Explorer l'application" data-en="Explore the app">Explorer l'application</span></div>
+    <h2 class="section-title">Four pages, <em style="font-style:italic;color:var(--accent)">one mission</em></h2>
+    <p class="section-sub">Every page serves a different purpose — together they form a complete cultural travel companion for France.</p>
+
+    <div class="pages-grid">
+
+      <a href="traveller_map.html" class="page-card">
+        <div class="page-card-top traveller">🗺️</div>
+        <div class="page-card-body">
+          <div class="page-card-tag">For Travellers</div>
+          <h3>Host Map</h3>
+          <p>Find hosts across France filtered by nationality. Flag pins on a live Leaflet map. Click any host to see their bio, languages, address and availability.</p>
+          <span class="page-card-link">Ouvrir → traveller_map.html</span>
+        </div>
+      </a>
+
+      <a href="homeaway-leaflet.html" class="page-card">
+        <div class="page-card-top brochure">🍛</div>
+        <div class="page-card-body">
+          <div class="page-card-tag">Cultural Places</div>
+          <h3>Cultural Brochure</h3>
+          <p>Pick your culture and explore nearby restaurants, groceries, worship spaces and community hubs in France — powered by OpenStreetMap, no API key needed.</p>
+          <span class="page-card-link">Ouvrir → homeaway-leaflet.html</span>
+        </div>
+      </a>
+
+      <a href="host_portal.html" class="page-card">
+        <div class="page-card-top portal">🏠</div>
+        <div class="page-card-body">
+          <div class="page-card-tag">For Hosts</div>
+          <h3>Host Portal</h3>
+          <p>Register, log in, and manage your hosting profile. Add your nationality, address, languages and bio. Only you can edit your own profile.</p>
+          <span class="page-card-link">Ouvrir → host_portal.html</span>
+        </div>
+      </a>
+
+      <a href="crud.html" class="page-card">
+        <div class="page-card-top admin">📋</div>
+        <div class="page-card-body">
+          <div class="page-card-tag">Admin</div>
+          <h3>Host Directory</h3>
+          <p>Full admin dashboard — view, search, add, edit and delete all host profiles. Filter by nationality, city and availability. Address opens directly in Google Maps.</p>
+          <span class="page-card-link">Ouvrir → crud.html</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- FOR WHO -->
+<section class="forwho">
+  <div class="section-inner">
+    <div class="section-tag"><span data-fr="Pour qui ?" data-en="Who is it for?">Pour qui ?</span></div>
+    <h2 class="section-title">Built for <em style="font-style:italic;color:var(--accent)">everyone</em> who travels</h2>
+    <div class="forwho-grid">
+      <div class="forwho-card">
+        <div class="emoji">✈️</div>
+        <h3>For <em>travellers</em> arriving in France</h3>
+        <ul>
+          <li>Find a host who shares your nationality</li>
+          <li>Discover restaurants and groceries from home</li>
+          <li>Locate your community's worship spaces</li>
+          <li>Feel culturally comfortable from day one</li>
+          <li>Navigate France with someone who understands you</li>
+        </ul>
+      </div>
+      <div class="forwho-card">
+        <div class="emoji">🏠</div>
+        <h3>For <em>hosts</em> living in France</h3>
+        <ul>
+          <li>Share your culture with travellers from back home</li>
+          <li>Register as an expat or French local</li>
+          <li>Set your availability and guest capacity</li>
+          <li>Help someone feel at home in a foreign country</li>
+          <li>Build cross-cultural connections across France</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NATIONALITIES -->
+<section class="nat-section">
+  <div class="section-inner">
+    <div class="section-tag"><span data-fr="Cultures représentées" data-en="Cultures represented">Cultures représentées</span></div>
+    <h2 class="section-title">16 nationalities, <em style="font-style:italic;color:var(--accent)">one France</em></h2>
+    <p class="section-sub" style="margin-inline:auto;text-align:center">From Paris to Marseille, hosts and cultural spaces from all over the world.</p>
+    <div class="nat-cloud">
+      <span class="nat-tag">🇮🇳 Indian</span>
+      <span class="nat-tag">🇨🇳 Chinese</span>
+      <span class="nat-tag">🇻🇳 Vietnamese</span>
+      <span class="nat-tag">🇹🇷 Turkish</span>
+      <span class="nat-tag">🇳🇬 Nigerian</span>
+      <span class="nat-tag">🇯🇵 Japanese</span>
+      <span class="nat-tag">🇰🇷 Korean</span>
+      <span class="nat-tag">🇵🇰 Pakistani</span>
+      <span class="nat-tag">🇪🇬 Egyptian</span>
+      <span class="nat-tag">🇧🇷 Brazilian</span>
+      <span class="nat-tag">🇵🇭 Filipino</span>
+      <span class="nat-tag">🇬🇭 Ghanaian</span>
+      <span class="nat-tag">🇮🇹 Italian</span>
+      <span class="nat-tag">🇲🇽 Mexican</span>
+      <span class="nat-tag">🇹🇭 Thai</span>
+      <span class="nat-tag">🇫🇷 French</span>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-banner">
+  <h2>Ready to feel <em>at home</em>?</h2>
+  <p><span data-fr="Trouvez votre hôte, découvrez votre culture, explorez la France." data-en="Find your host, discover your culture, explore France.">Trouvez votre hôte, découvrez votre culture, explorez la France.</span></p>
+  <div class="cta-actions">
+    <a href="traveller_map.html" class="btn-hero btn-hero-primary"><span data-fr="🗺️ Trouver un hôte" data-en="🗺️ Find a Host in France">🗺️ Find a Host in France</span></a>
+    <a href="host_portal.html" class="btn-hero btn-hero-ghost"><span data-fr="🏠 Devenir hôte" data-en="🏠 Register as a Host">🏠 Register as a Host</span></a>
+  </div>
+</div>
+
+<!-- TRICOLORE -->
+<div class="tricolore"><div class="b"></div><div class="w"></div><div class="r"></div></div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">🇫🇷 Home<em>Away</em> France</div>
+  <div class="footer-links">
+    <a href="traveller_map.html">Host Map</a>
+    <a href="homeaway-leaflet.html">Cultural Brochure</a>
+    <a href="host_portal.html">Host Portal</a>
+    <a href="crud.html">Admin</a>
+  </div>
+  <div>Map data © <a href="https://openstreetmap.org" style="color:var(--accent);text-decoration:none">OpenStreetMap</a></div>
+</footer>
+
+<script>
+// Sticky nav
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40)
+})
+
+// Load live stats from backend
+fetch('http://localhost:5000/api/hosts')
+  .then(r => r.json())
+  .then(data => {
+    const hosts = data.hosts || []
+    document.getElementById('statHosts').textContent = hosts.length
+    document.getElementById('statAvail').textContent = hosts.filter(h => h.available).length
+  })
+  .catch(() => {
+    document.getElementById('statHosts').textContent = '15'
+    document.getElementById('statAvail').textContent = '13'
+  })
+</script>
+<script src="lang.js"></script>
+<script>document.addEventListener("DOMContentLoaded", () => HomeAwayLang.injectLangToggle(".nav-links"))</script>
+</body>
+</html>

@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HomeAway France — Trouvez votre culture</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0c0a;
+      --surface: #181411;
+      --card: #1f1b17;
+      --border: #2e2720;
+      --accent: #d4763b;
+      --gold: #c9a84c;
+      --text: #f0e8dc;
+      --muted: #8a7a6a;
+      --soft: #3a2e24;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 800px; height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(212,118,59,0.08) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    /* subtle grid texture */
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(212,118,59,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212,118,59,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    .hero-inner { position: relative; z-index: 1; max-width: 720px; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      animation: rise 1s 0.1s forwards;
+    }
+    .eyebrow::before, .eyebrow::after {
+      content: '';
+      width: 40px; height: 1px;
+      background: linear-gradient(to right, transparent, var(--accent));
+    }
+    .eyebrow::after { background: linear-gradient(to left, transparent, var(--accent)); }
+
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(4rem, 10vw, 8rem);
+      font-weight: 300;
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+      opacity: 0;
+      animation: rise 1s 0.25s forwards;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+      display: block;
+    }
+
+    .hero p {
+      margin-top: 2rem;
+      font-size: 1rem;
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.8;
+      max-width: 400px;
+      margin-inline: auto;
+      opacity: 0;
+      animation: rise 1s 0.4s forwards;
+    }
+
+    .hero-free {
+      margin-top: 2rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--gold);
+      background: rgba(201,168,76,0.1);
+      border: 1px solid rgba(201,168,76,0.2);
+      padding: 0.4rem 1rem;
+      border-radius: 2rem;
+      opacity: 0;
+      animation: rise 1s 0.55s forwards;
+    }
+
+    .scroll-hint {
+      margin-top: 3rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      opacity: 0;
+      animation: rise 1s 0.7s forwards;
+    }
+    .scroll-hint .line {
+      width: 1px; height: 40px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+      animation: drip 1.8s ease-in-out infinite;
+    }
+    @keyframes drip { 0%,100%{transform:scaleY(1);opacity:1} 50%{transform:scaleY(1.4);opacity:0.6} }
+
+    @keyframes rise {
+      from { opacity:0; transform:translateY(24px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ── CULTURE PICKER ── */
+    .picker {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 6rem 2rem 0;
+      text-align: center;
+    }
+
+    .tag {
+      font-size: 0.62rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .picker h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 300;
+      margin-bottom: 0.5rem;
+    }
+
+    .picker > p {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .culture-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+      gap: 0.6rem;
+    }
+
+    .culture-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.85rem 0.4rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.78rem;
+      color: var(--muted);
+      transition: all 0.18s ease;
+    }
+    .culture-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(212,118,59,0.15);
+    }
+    .culture-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(212,118,59,0.3);
+    }
+    .culture-btn .flag { font-size: 1.7rem; }
+
+    /* ── CATEGORY TABS ── */
+    .cat-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+
+    .cat-tab {
+      padding: 0.4rem 0.9rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 2rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .cat-tab:hover { border-color: var(--accent); color: var(--accent); }
+    .cat-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* ── MAP SECTION ── */
+    .map-section {
+      max-width: 1080px;
+      margin: 3.5rem auto 0;
+      padding: 0 2rem;
+      display: none;
+    }
+    .map-section.visible { display: block; }
+
+    .map-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .map-header h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.9rem;
+      font-weight: 300;
+    }
+
+    .map-header .status {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    #map {
+      width: 100%;
+      height: 480px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+
+    /* Leaflet popup dark style */
+    .leaflet-popup-content-wrapper {
+      background: var(--card) !important;
+      color: var(--text) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+    }
+    .leaflet-popup-tip { background: var(--card) !important; }
+    .leaflet-popup-content { font-family: 'Outfit', sans-serif; font-size: 0.85rem; line-height: 1.5; }
+    .popup-name { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .popup-type { font-size: 0.7rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.4rem; }
+    .popup-addr { color: var(--muted); font-size: 0.78rem; }
+    .popup-link { display:inline-block; margin-top:0.5rem; font-size:0.75rem; color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(212,118,59,0.3); }
+
+    /* ── CARDS ── */
+    .cards-section {
+      max-width: 1080px;
+      margin: 2rem auto 6rem;
+      padding: 0 2rem;
+      display: none;
+    }
+    .cards-section.visible { display: block; }
+
+    .cards-label {
+      font-size: 0.62rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.85rem;
+    }
+
+    .place-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      animation: rise 0.35s ease both;
+    }
+    .place-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+      box-shadow: 0 10px 30px rgba(212,118,59,0.12);
+    }
+    .place-card.highlighted { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(212,118,59,0.3); }
+
+    .card-top {
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-body { padding: 1rem; }
+    .card-body .cat { font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.3rem; }
+    .card-body h4 { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--text); }
+    .card-body p { font-size: 0.76rem; color: var(--muted); line-height: 1.5; }
+    .card-body .osm-link { display:inline-block; margin-top:0.6rem; font-size:0.72rem; color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(212,118,59,0.3); }
+
+    /* loading overlay */
+    .map-overlay {
+      position: relative;
+    }
+    .map-spinner {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(14,12,10,0.85);
+      padding: 1.5rem 2rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      backdrop-filter: blur(6px);
+    }
+    .map-spinner.show { display: flex; }
+    .spin {
+      width: 24px; height: 24px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">🇫🇷 Guide Culturel · France</div>
+    <h1>Sentez-vous<br/><em>chez vous</em><br/>en France</h1>
+    <p>Trouvez des restaurants, épiceries, lieux de culte et espaces communautaires qui vous ressemblent — partout en France.</p>
+    <div class="hero-free">✦ 100% gratuit · Sans clé API · Propulsé par OpenStreetMap</div>
+    <div class="scroll-hint">
+      <div class="line"></div>
+      Explore
+    </div>
+  </div>
+</section>
+
+<!-- PICKER -->
+<section class="picker" id="picker">
+  <div class="tag">Étape 1</div>
+  <h2>Quelle est votre culture ?</h2>
+  <p>Choisissez votre culture — la carte trouvera des lieux familiers en France.</p>
+  <div class="culture-grid" id="cultureGrid"></div>
+</section>
+
+<!-- MAP -->
+<section class="map-section" id="mapSection">
+  <div class="map-header">
+    <h3 id="mapTitle">Results</h3>
+    <span class="status" id="mapStatus"></span>
+  </div>
+  <div class="cat-row" id="catRow"></div>
+  <div class="map-overlay">
+    <div id="map"></div>
+    <div class="map-spinner" id="spinner">
+      <div class="spin"></div>
+      Searching nearby places…
+    </div>
+  </div>
+</section>
+
+<!-- CARDS -->
+<section class="cards-section" id="cardsSection">
+  <div class="cards-label">Browse by category</div>
+  <div class="cards-grid" id="cardsGrid"></div>
+</section>
+
+<footer>
+  HomeAway France · Map data © <a href="https://www.openstreetmap.org" target="_blank">OpenStreetMap</a> contributors · Places via <a href="https://overpass-api.de" target="_blank">Overpass API</a>
+</footer>
+
+<script>
+// ── DATA ──
+const CULTURES = [
+  { code:'IN', label:'Indian',     flag:'🇮🇳',
+    categories:[
+      { label:'Restaurants', emoji:'🍛', tags:{amenity:'restaurant', cuisine:'indian'} },
+      { label:'Grocery',     emoji:'🛒', tags:{shop:'supermarket', name:'indian'}, fallback:'Indian grocery' },
+      { label:'Temple',      emoji:'🛕', tags:{amenity:'place_of_worship', religion:'hindu'} },
+      { label:'Community',   emoji:'🎉', tags:{amenity:'community_centre'}, fallback:'Indian community' },
+      { label:'Sweets',      emoji:'🍮', tags:{shop:'confectionery', cuisine:'indian'}, fallback:'mithai sweets' },
+    ]},
+  { code:'CN', label:'Chinese',    flag:'🇨🇳',
+    categories:[
+      { label:'Restaurants', emoji:'🥢', tags:{amenity:'restaurant', cuisine:'chinese'} },
+      { label:'Supermarket', emoji:'🛒', tags:{shop:'supermarket', name:'chinese'}, fallback:'Chinese supermarket' },
+      { label:'Temple',      emoji:'🏯', tags:{amenity:'place_of_worship', religion:'buddhist'} },
+      { label:'Bakery',      emoji:'🥐', tags:{shop:'bakery', cuisine:'chinese'}, fallback:'Chinese bakery' },
+      { label:'Community',   emoji:'🎉', tags:{amenity:'community_centre'}, fallback:'Chinese community' },
+    ]},
+  { code:'JP', label:'Japanese',   flag:'🇯🇵',
+    categories:[
+      { label:'Restaurants', emoji:'🍣', tags:{amenity:'restaurant', cuisine:'japanese'} },
+      { label:'Ramen',       emoji:'🍜', tags:{amenity:'restaurant', cuisine:'ramen'} },
+      { label:'Grocery',     emoji:'🛒', tags:{shop:'supermarket', name:'japanese'}, fallback:'Japanese grocery' },
+      { label:'Shrine',      emoji:'⛩️', tags:{amenity:'place_of_worship', religion:'shinto'} },
+      { label:'Community',   emoji:'🎉', tags:{amenity:'community_centre'}, fallback:'Japanese community' },
+    ]},
+  { code:'MX', label:'Mexican',    flag:'🇲🇽',
+    categories:[
+      { label:'Restaurants', emoji:'🌮', tags:{amenity:'restaurant', cuisine:'mexican'} },
+      { label:'Taqueria',    emoji:'🌯', tags:{amenity:'fast_food', cuisine:'mexican'} },
+      { label:'Grocery',     emoji:'🛒', tags:{shop:'supermarket', name:'latino'}, fallback:'Mexican tienda' },
+      { label:'Church',      emoji:'⛪', tags:{amenity:'place_of_worship', religion:'christian'} },
+      { label:'Bakery',      emoji:'🥐', tags:{shop:'bakery', name:'panaderia'}, fallback:'panaderia bakery' },
+    ]},
+  { code:'NG', label:'Nigerian',   flag:'🇳🇬',
+    categories:[
+      { label:'Restaurants', emoji:'🍲', tags:{amenity:'restaurant', cuisine:'african'} },
+      { label:'Grocery',     emoji:'🛒', tags:{shop:'supermarket', name:'african'}, fallback:'African grocery' },
+      { label:'Church',      emoji:'⛪', tags:{amenity:'place_of_worship', religion:'christian'} },
+      { label:'Hair',        emoji:'💇', tags:{shop:'hairdresser', name:'african'}, fallback:'African hair braiding' },
+      { label:'Community',   emoji:'🎉', tags:{amenity:'community_centre'}, fallback:'African community' },
+    ]},
+  { code:'KR', label:'Korean',     flag:'🇰🇷',
+    categories:[
+      { label:'Restaurants', emoji:'🥩', tags:{amenity:'restaurant', cuisine:'korean'} },
+      { label:'BBQ',         emoji:'🔥', tags:{amenity:'restaurant', cuisine:'korean_bbq'} },
+      { label:'Supermarket', emoji:'🛒', tags:{shop:'supermarket', name:'korean'}, fallback:'Korean supermarket' },
+      { label:'Church',      emoji:'⛪', tags:{amenity:'place_of_worship', name:'korean'}, fallback:'Korean church' },
+      { label:'K-Beauty',    emoji:'💄', tags:{shop:'cosmetics', name:'korean'}, fallback:'Korean beauty store' },
+    ]},
+  { code:'IT', label:'Italian',    flag:'🇮🇹',
+    categories:[
+      { label:'Restaurants', emoji:'🍝', tags:{amenity:'restaurant', cuisine:'italian'} },
+      { label:'Pizza',       emoji:'🍕', tags:{amenity:'restaurant', cuisine:'pizza'} },
+      { label:'Deli',        emoji:'🥩', tags:{shop:'deli', cuisine:'italian'}, fallback:'Italian salumeria' },
+      { label:'Cafe',        emoji:'☕', tags:{amenity:'cafe', cuisine:'italian'} },
+      { label:'Gelato',      emoji:'🍦', tags:{shop:'ice_cream', cuisine:'italian'}, fallback:'gelato shop' },
+    ]},
+  { code:'TR', label:'Turkish',    flag:'🇹🇷',
+    categories:[
+      { label:'Restaurants', emoji:'🥙', tags:{amenity:'restaurant', cuisine:'turkish'} },
+      { label:'Kebab',       emoji:'🍢', tags:{amenity:'fast_food', cuisine:'kebab'} },
+      { label:'Bakery',      emoji:'🥐', tags:{shop:'bakery', cuisine:'turkish'}, fallback:'Turkish börek bakery' },
+      { label:'Mosque',      emoji:'🕌', tags:{amenity:'place_of_worship', religion:'muslim'} },
+      { label:'Grocery',     emoji:'🛒', tags:{shop:'supermarket', name:'turkish'}, fallback:'Turkish halal shop' },
+    ]},
+  { code:'PH', label:'Filipino',   flag:'🇵🇭',
+    categories:[
+      { label:'Restaurants', emoji:'🍖', tags:{amenity:'restaurant', cuisine:'filipino'} },
+      { label:'Grocery',     emoji:'🛒', tags:{shop:'supermarket', name:'filipino'}, fallback:'Filipino grocery' },
+      { label:'Church',      emoji:'⛪', tags:{amenity:'place_of_worship', religion:'christian'} },
+      { label:'Bakery',      emoji:'🥐', tags:{shop:'bakery', name:'filipino'}, fallback:'Filipino pandesal bakery' },
+      { label:'Community',   emoji:'🎉', tags:{amenity:'community_centre'}, fallback:'Filipino community' },
+    ]},
+  { code:'BR', label:'Brazilian',  flag:'🇧🇷',
+    categories:[
+      { label:'Steakhouse',  emoji:'🥩', tags:{amenity:'restaurant', cuisine:'brazilian'} },
+      { label:'Grocery',     emoji:'🛒', tags:{shop:'supermarket', name:'brazilian'}, fallback:'Brazilian grocery' },
+      { label:'Church',      emoji:'⛪', tags:{amenity:'place_of_worship', religion:'christian'} },
+      { label:'Capoeira',    emoji:'🥋', tags:{leisure:'sports_centre', sport:'capoeira'}, fallback:'capoeira studio' },
+      { label:'Community',   emoji:'🎉', tags:{amenity:'community_centre'}, fallback:'Brazilian community' },
+    ]},
+  { code:'VN', label:'Vietnamese', flag:'🇻🇳',
+    categories:[
+      { label:'Pho',         emoji:'🍜', tags:{amenity:'restaurant', cuisine:'vietnamese'} },
+      { label:'Banh Mi',     emoji:'🥖', tags:{amenity:'fast_food', cuisine:'vietnamese'}, fallback:'banh mi shop' },
+      { label:'Grocery',     emoji:'🛒', tags:{shop:'supermarket', name:'vietnamese'}, fallback:'Vietnamese Asian grocery' },
+      { label:'Temple',      emoji:'🛕', tags:{amenity:'place_of_worship', religion:'buddhist'} },
+      { label:'Community',   emoji:'🎉', tags:{amenity:'community_centre'}, fallback:'Vietnamese community' },
+    ]},
+  { code:'TH', label:'Thai',       flag:'🇹🇭',
+    categories:[
+      { label:'Restaurants', emoji:'🍛', tags:{amenity:'restaurant', cuisine:'thai'} },
+      { label:'Grocery',     emoji:'🛒', tags:{shop:'supermarket', name:'thai'}, fallback:'Thai Asian grocery' },
+      { label:'Temple',      emoji:'🛕', tags:{amenity:'place_of_worship', religion:'buddhist'} },
+      { label:'Massage',     emoji:'💆', tags:{leisure:'spa', name:'thai'}, fallback:'Thai massage spa' },
+      { label:'Community',   emoji:'🎉', tags:{amenity:'community_centre'}, fallback:'Thai community' },
+    ]},
+  { code:'EG', label:'Egyptian',   flag:'🇪🇬',
+    categories:[
+      { label:'Restaurants', emoji:'🧆', tags:{amenity:'restaurant', cuisine:'arab'} },
+      { label:'Grocery',     emoji:'🛒', tags:{shop:'supermarket', name:'halal'}, fallback:'Middle Eastern halal grocery' },
+      { label:'Mosque',      emoji:'🕌', tags:{amenity:'place_of_worship', religion:'muslim'} },
+      { label:'Bakery',      emoji:'🥐', tags:{shop:'bakery', cuisine:'arab'}, fallback:'Middle Eastern bakery' },
+      { label:'Community',   emoji:'🎉', tags:{amenity:'community_centre'}, fallback:'Arab community' },
+    ]},
+  { code:'PK', label:'Pakistani',  flag:'🇵🇰',
+    categories:[
+      { label:'Restaurants', emoji:'🍛', tags:{amenity:'restaurant', cuisine:'pakistani'} },
+      { label:'Halal',       emoji:'🥩', tags:{shop:'butcher', diet:'halal'}, fallback:'halal butcher' },
+      { label:'Grocery',     emoji:'🛒', tags:{shop:'supermarket', name:'pakistani'}, fallback:'Pakistani halal grocery' },
+      { label:'Mosque',      emoji:'🕌', tags:{amenity:'place_of_worship', religion:'muslim'} },
+      { label:'Sweets',      emoji:'🍮', tags:{shop:'confectionery', name:'pakistani'}, fallback:'Pakistani mithai sweets' },
+    ]},
+  { code:'ET', label:'Ethiopian',  flag:'🇪🇹',
+    categories:[
+      { label:'Restaurants', emoji:'🍲', tags:{amenity:'restaurant', cuisine:'ethiopian'} },
+      { label:'Coffee',      emoji:'☕', tags:{amenity:'cafe', name:'ethiopian'}, fallback:'Ethiopian coffee cafe' },
+      { label:'Grocery',     emoji:'🛒', tags:{shop:'supermarket', name:'african'}, fallback:'African Ethiopian grocery' },
+      { label:'Church',      emoji:'⛪', tags:{amenity:'place_of_worship', religion:'christian'}, fallback:'Ethiopian Orthodox church' },
+      { label:'Community',   emoji:'🎉', tags:{amenity:'community_centre'}, fallback:'Ethiopian community' },
+    ]},
+  { code:'GH', label:'Ghanaian',   flag:'🇬🇭',
+    categories:[
+      { label:'Restaurants', emoji:'🍲', tags:{amenity:'restaurant', cuisine:'african'} },
+      { label:'Grocery',     emoji:'🛒', tags:{shop:'supermarket', name:'african'}, fallback:'African grocery' },
+      { label:'Church',      emoji:'⛪', tags:{amenity:'place_of_worship', religion:'christian'} },
+      { label:'Hair',        emoji:'💇', tags:{shop:'hairdresser', name:'african'}, fallback:'African hair braiding' },
+      { label:'Community',   emoji:'🎉', tags:{amenity:'community_centre'}, fallback:'Ghanaian African community' },
+    ]},
+]
+
+// ── STATE ──
+let map = null
+let selectedCulture = null
+let activeCat = 0
+let currentMarkers = []
+let userLatLng = null
+
+// ── INIT MAP ──
+function initMap(lat, lng) {
+  if (map) { map.setView([lat, lng], 14); return }
+  map = L.map('map', { zoomControl: true }).setView([lat, lng], 14)
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+    maxZoom: 19
+  }).addTo(map)
+
+  // User marker
+  const userIcon = L.divIcon({
+    className: '',
+    html: `<div style="
+      width:14px;height:14px;
+      background:#d4763b;
+      border:3px solid white;
+      border-radius:50%;
+      box-shadow:0 0 0 3px rgba(212,118,59,0.3)
+    "></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7]
+  })
+  L.marker([lat, lng], { icon: userIcon }).addTo(map)
+    .bindPopup('<div style="font-family:Outfit,sans-serif;color:#f0e8dc">📍 You are here</div>')
+}
+
+// ── BUILD CULTURE GRID ──
+const grid = document.getElementById('cultureGrid')
+CULTURES.forEach(c => {
+  const btn = document.createElement('button')
+  btn.className = 'culture-btn'
+  btn.innerHTML = `<span class="flag">${c.flag}</span>${c.label}`
+  btn.onclick = () => selectCulture(c, btn)
+  grid.appendChild(btn)
+})
+
+// ── SELECT CULTURE ──
+function selectCulture(culture, btn) {
+  document.querySelectorAll('.culture-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  selectedCulture = culture
+  activeCat = 0
+
+  document.getElementById('mapTitle').textContent = `${culture.flag} ${culture.label} Places Near You`
+  document.getElementById('mapSection').classList.add('visible')
+  document.getElementById('cardsSection').classList.add('visible')
+
+  buildCatTabs(culture)
+  buildCards(culture)
+
+  document.getElementById('mapSection').scrollIntoView({ behavior:'smooth', block:'start' })
+
+  if (userLatLng) {
+    initMap(userLatLng.lat, userLatLng.lng)
+    searchPlaces()
+  } else {
+    setStatus('Getting your location…')
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        userLatLng = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+        initMap(userLatLng.lat, userLatLng.lng)
+        searchPlaces()
+      },
+      () => {
+        // fallback: London
+        userLatLng = { lat: 48.8566, lng: 2.3522 }
+        initMap(userLatLng.lat, userLatLng.lng)
+        setStatus('Location unavailable — showing London. Drag the map to your city.')
+        searchPlaces()
+      }
+    )
+  }
+}
+
+// ── CATEGORY TABS ──
+function buildCatTabs(culture) {
+  const row = document.getElementById('catRow')
+  row.innerHTML = ''
+  culture.categories.forEach((cat, i) => {
+    const btn = document.createElement('button')
+    btn.className = 'cat-tab' + (i === 0 ? ' active' : '')
+    btn.textContent = `${cat.emoji} ${cat.label}`
+    btn.onclick = () => {
+      document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'))
+      btn.classList.add('active')
+      activeCat = i
+      searchPlaces()
+    }
+    row.appendChild(btn)
+  })
+}
+
+// ── OVERPASS SEARCH ──
+async function searchPlaces() {
+  if (!selectedCulture || !userLatLng) return
+
+  const cat = selectedCulture.categories[activeCat]
+  showSpinner(true)
+  clearMarkers()
+  setStatus('Searching…')
+
+  const { lat, lng } = userLatLng
+  const radius = 5000
+
+  // Build Overpass query from tags
+  const tagEntries = Object.entries(cat.tags)
+  const primaryKey = tagEntries[0][0]
+  const primaryVal = tagEntries[0][1]
+
+  // Try tagged search first, fall back to name search
+  const query = `
+    [out:json][timeout:15];
+    (
+      node["${primaryKey}"="${primaryVal}"](around:${radius},${lat},${lng});
+      way["${primaryKey}"="${primaryVal}"](around:${radius},${lat},${lng});
+    );
+    out center 20;
+  `
+
+  try {
+    const res = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: 'data=' + encodeURIComponent(query)
+    })
+    const data = await res.json()
+    let elements = data.elements || []
+
+    // If too few results, try fallback text search via Nominatim
+    if (elements.length < 2 && cat.fallback) {
+      elements = await nominatimSearch(cat.fallback, lat, lng)
+    }
+
+    if (elements.length === 0) {
+      setStatus(`No ${cat.label.toLowerCase()} found nearby — try zooming out or a different city.`)
+    } else {
+      setStatus(`${elements.length} place${elements.length !== 1 ? 's' : ''} found`)
+      plotMarkers(elements, cat)
+    }
+  } catch (e) {
+    setStatus('Search failed — check your connection.')
+  } finally {
+    showSpinner(false)
+  }
+}
+
+// ── NOMINATIM FALLBACK ──
+async function nominatimSearch(query, lat, lng) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&countrycodes=fr&limit=12&viewbox=format=json&countrycodes=fr&limit=12&viewbox=${lng-0.1},${lat+0.08},${lng+0.1},${lat-0.08}&bounded=1`
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } })
+    const data = await res.json()
+    return data.map(d => ({
+      lat: parseFloat(d.lat),
+      lon: parseFloat(d.lon),
+      tags: { name: d.display_name.split(',')[0], type: d.type }
+    }))
+  } catch { return [] }
+}
+
+// ── PLOT MARKERS ──
+function plotMarkers(elements, cat) {
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="
+      font-size:1.3rem;
+      line-height:1;
+      filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    ">${cat.emoji}</div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    popupAnchor: [0, -16]
+  })
+
+  elements.forEach(el => {
+    const lat = el.lat ?? el.center?.lat
+    const lng = el.lon ?? el.center?.lon
+    if (!lat || !lng) return
+
+    const name = el.tags?.name || el.tags?.['name:en'] || cat.label
+    const addr = [el.tags?.['addr:street'], el.tags?.['addr:city']].filter(Boolean).join(', ')
+    const osmLink = `https://www.openstreetmap.org/${el.type || 'node'}/${el.id}`
+
+    const marker = L.marker([lat, lng], { icon }).addTo(map)
+    marker.bindPopup(`
+      <div class="popup-type">${cat.emoji} ${cat.label}</div>
+      <div class="popup-name">${name}</div>
+      ${addr ? `<div class="popup-addr">📍 ${addr}</div>` : ''}
+      ${el.id ? `<a class="popup-link" href="${osmLink}" target="_blank">View on OpenStreetMap →</a>` : ''}
+    `)
+    currentMarkers.push(marker)
+  })
+
+  // Fit bounds
+  if (currentMarkers.length > 0) {
+    const group = L.featureGroup(currentMarkers)
+    map.fitBounds(group.getBounds().pad(0.2))
+  }
+}
+
+function clearMarkers() {
+  currentMarkers.forEach(m => map && map.removeLayer(m))
+  currentMarkers = []
+}
+
+function showSpinner(show) {
+  document.getElementById('spinner').classList.toggle('show', show)
+}
+
+function setStatus(msg) {
+  document.getElementById('mapStatus').textContent = msg
+}
+
+// ── BUILD CARDS ──
+function buildCards(culture) {
+  const g = document.getElementById('cardsGrid')
+  g.innerHTML = ''
+  culture.categories.forEach((cat, i) => {
+    const card = document.createElement('div')
+    card.className = 'place-card'
+    card.style.animationDelay = `${i * 0.07}s`
+    const q = encodeURIComponent((cat.fallback || cat.label) + ' ' + culture.label)
+    card.innerHTML = `
+      <div class="card-top">${cat.emoji}</div>
+      <div class="card-body">
+        <div class="cat">${cat.label}</div>
+        <h4>${culture.label} ${cat.label}</h4>
+        <p>Find familiar ${cat.label.toLowerCase()} spots nearby.</p>
+        <a class="osm-link" href="https://www.openstreetmap.org/search?query=${q}" target="_blank">Search on OSM →</a>
+      </div>`
+    card.onclick = () => {
+      activeCat = i
+      document.querySelectorAll('.cat-tab').forEach((t, ti) => t.classList.toggle('active', ti === i))
+      searchPlaces()
+      document.getElementById('mapSection').scrollIntoView({ behavior:'smooth' })
+    }
+    g.appendChild(card)
+  })
+}
+</script>
+</body>
+</html>
