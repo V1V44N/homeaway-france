@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/index.py", "use": "@vercel/python" },
+    { "src": "main/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.py" },
+    { "src": "/(.*\\.html)", "dest": "/main/$1" },
+    { "src": "/france_bg\\.png", "dest": "/main/france_bg.png" },
+    { "src": "/lang\\.js", "dest": "/main/lang.js" },
+    { "src": "/", "dest": "/main/index.html" }
+  ]
+}

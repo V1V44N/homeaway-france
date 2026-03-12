@@ -8,9 +8,18 @@ import hashlib, os, secrets, jwt
 app = Flask(__name__)
 CORS(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///homeaway_auth.db'
+# Database: PostgreSQL on Vercel (via DATABASE_URL), SQLite locally
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///homeaway_auth.db')
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'homeaway-dev-secret-change-in-production')
+
+# AI Chat — GROQ_API_KEY must be set as env var
+_groq_key = os.environ.get('GROQ_API_KEY')
+from groq import Groq
+client = Groq(api_key=_groq_key) if _groq_key else None
 
 db = SQLAlchemy(app)
 
