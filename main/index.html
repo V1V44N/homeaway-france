@@ -127,10 +127,8 @@
 
     .hero-sub strong { color: var(--text); font-weight: 400; }
 
-    .hero-flags {
-      margin-top: 1.75rem; font-size: 1.6rem; letter-spacing: 0.15em;
-      opacity: 0; animation: rise 1s 0.5s forwards;
-    }
+    /* ── FLAGS MARQUEE replaces hero-flags ── */
+    .hero-flags { display: none; } /* kept for compat */
 
     .hero-actions {
       margin-top: 2.5rem; display: flex; gap: 0.75rem;
@@ -162,6 +160,47 @@
     }
     @keyframes drip { 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(1.4)} }
     @keyframes rise { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── KEN BURNS ── */
+    @keyframes kenBurns {
+      0%   { transform: scale(1)    translate(0,    0);    }
+      25%  { transform: scale(1.08) translate(-1%, -0.5%); }
+      50%  { transform: scale(1.12) translate( 1%,  0.8%); }
+      75%  { transform: scale(1.06) translate(-0.5%, 1%);  }
+      100% { transform: scale(1)    translate(0,    0);    }
+    }
+    .hero-bg {
+      position: absolute; inset: -5%;
+      background: url('france_bg.png') center/cover no-repeat;
+      animation: kenBurns 24s ease-in-out infinite;
+      z-index: 0;
+    }
+    .hero-bg-overlay {
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(8,16,40,0.72) 0%, rgba(8,16,40,0.55) 50%, rgba(8,16,40,0.82) 100%),
+        linear-gradient(to right, rgba(0,35,149,0.18) 0%, transparent 50%, rgba(237,41,57,0.14) 100%);
+      z-index: 1;
+    }
+
+    /* ── MARQUEE TICKER ── */
+    @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    .flags-ticker {
+      margin-top: 1.75rem; overflow: hidden; width: 100%; max-width: 700px;
+      mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+      -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+      opacity: 0; animation: rise 1s 0.5s forwards;
+    }
+    .flags-track {
+      display: flex; gap: 0.6rem; width: max-content;
+      animation: marquee 35s linear infinite; font-size: 1.55rem;
+    }
+    .flags-track:hover { animation-play-state: paused; }
+
+    /* ── SCROLL REVEAL ── */
+    @keyframes revealUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+    .reveal { opacity: 0; }
+    .reveal.visible { animation: revealUp 0.7s ease both; }
 
     /* ── STATS ── */
     .stats-bar {
@@ -317,6 +356,8 @@
 
 <!-- HERO -->
 <section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-bg-overlay"></div>
   <div class="hero-inner">
     <div class="hero-eyebrow"><span data-fr="Bienvenue en France" data-en="Welcome to France">Bienvenue en France</span></div>
     <h1>
@@ -402,7 +443,7 @@
           <div class="page-card-tag">For Travellers</div>
           <h3>Host Map</h3>
           <p>Find hosts across France filtered by nationality. Flag pins on a live Leaflet map. Click any host to see their bio, languages, address and availability.</p>
-          <span class="page-card-link">Ouvrir → traveller_map.html</span>
+          <span class="page-card-link">Open →</span>
         </div>
       </a>
 
@@ -412,7 +453,7 @@
           <div class="page-card-tag">Cultural Places</div>
           <h3>Cultural Brochure</h3>
           <p>Pick your culture and explore nearby restaurants, groceries, worship spaces and community hubs in France — powered by OpenStreetMap, no API key needed.</p>
-          <span class="page-card-link">Ouvrir → homeaway-leaflet.html</span>
+          <span class="page-card-link">Open →</span>
         </div>
       </a>
 
@@ -422,7 +463,7 @@
           <div class="page-card-tag">For Hosts</div>
           <h3>Host Portal</h3>
           <p>Register, log in, and manage your hosting profile. Add your nationality, address, languages and bio. Only you can edit your own profile.</p>
-          <span class="page-card-link">Ouvrir → host_portal.html</span>
+          <span class="page-card-link">Open →</span>
         </div>
       </a>
 
@@ -432,7 +473,7 @@
           <div class="page-card-tag">Admin</div>
           <h3>Host Directory</h3>
           <p>Full admin dashboard — view, search, add, edit and delete all host profiles. Filter by nationality, city and availability. Address opens directly in Google Maps.</p>
-          <span class="page-card-link">Ouvrir → crud.html</span>
+          <span class="page-card-link">Open →</span>
         </div>
       </a>
 
@@ -476,26 +517,9 @@
 <section class="nat-section">
   <div class="section-inner">
     <div class="section-tag"><span data-fr="Cultures représentées" data-en="Cultures represented">Cultures représentées</span></div>
-    <h2 class="section-title">16 nationalities, <em style="font-style:italic;color:var(--accent)">one France</em></h2>
+    <h2 class="section-title" id="natTitle">— nationalities, <em style="font-style:italic;color:var(--accent)">one France</em></h2>
     <p class="section-sub" style="margin-inline:auto;text-align:center">From Paris to Marseille, hosts and cultural spaces from all over the world.</p>
-    <div class="nat-cloud">
-      <span class="nat-tag">🇮🇳 Indian</span>
-      <span class="nat-tag">🇨🇳 Chinese</span>
-      <span class="nat-tag">🇻🇳 Vietnamese</span>
-      <span class="nat-tag">🇹🇷 Turkish</span>
-      <span class="nat-tag">🇳🇬 Nigerian</span>
-      <span class="nat-tag">🇯🇵 Japanese</span>
-      <span class="nat-tag">🇰🇷 Korean</span>
-      <span class="nat-tag">🇵🇰 Pakistani</span>
-      <span class="nat-tag">🇪🇬 Egyptian</span>
-      <span class="nat-tag">🇧🇷 Brazilian</span>
-      <span class="nat-tag">🇵🇭 Filipino</span>
-      <span class="nat-tag">🇬🇭 Ghanaian</span>
-      <span class="nat-tag">🇮🇹 Italian</span>
-      <span class="nat-tag">🇲🇽 Mexican</span>
-      <span class="nat-tag">🇹🇭 Thai</span>
-      <span class="nat-tag">🇫🇷 French</span>
-    </div>
+    <div class="flags-ticker"><div class="flags-track" id="natCloud"></div></div>
   </div>
 </section>
 
@@ -530,17 +554,78 @@ window.addEventListener('scroll', () => {
   document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40)
 })
 
-// Load live stats from backend
-fetch('http://localhost:5000/api/hosts')
+// ── SCROLL REVEAL ──
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      e.target.style.animationDelay = (i * 0.08) + 's'
+      e.target.classList.add('visible')
+      revealObserver.unobserve(e.target)
+    }
+  })
+}, { threshold: 0.12 })
+document.querySelectorAll('.stats-bar, .how, .pages-section, .nat-section, .forwho, .cta-banner')
+  .forEach(el => { el.classList.add('reveal'); revealObserver.observe(el) })
+
+// ── STAT COUNT-UP ──
+function countUp(el, target, duration = 1400) {
+  const start = performance.now()
+  const update = (now) => {
+    const progress = Math.min((now - start) / duration, 1)
+    const eased = 1 - Math.pow(1 - progress, 3)
+    el.textContent = Math.round(eased * target).toLocaleString()
+    if (progress < 1) requestAnimationFrame(update)
+  }
+  requestAnimationFrame(update)
+}
+const statObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      countUp(e.target, parseFloat(e.target.dataset.target))
+      statObserver.unobserve(e.target)
+    }
+  })
+}, { threshold: 0.5 })
+
+// ── ISO CODE → FLAG EMOJI ──
+function codeToFlag(code) {
+  return [...code.toUpperCase()].map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('')
+}
+
+// ── LIVE DATA FROM BACKEND ──
+fetch('/api/hosts')
   .then(r => r.json())
   .then(data => {
     const hosts = data.hosts || []
-    document.getElementById('statHosts').textContent = hosts.length
-    document.getElementById('statAvail').textContent = hosts.filter(h => h.available).length
+    const natMap = {}
+    hosts.forEach(h => { if (h.nationality_code && h.nationality) natMap[h.nationality_code] = h.nationality })
+    const codes = Object.keys(natMap)
+
+    // Stats with count-up
+    const targets = { statHosts: hosts.length, statNat: codes.length, statAvail: hosts.filter(h => h.available).length }
+    Object.entries(targets).forEach(([id, val]) => {
+      const el = document.getElementById(id)
+      if (!el) return
+      el.dataset.target = val; el.textContent = '0'; statObserver.observe(el)
+    })
+
+    // Hero flags marquee (doubled for seamless loop)
+    const heroEl = document.getElementById('heroFlags')
+    if (heroEl) {
+      const flagStr = codes.map(c => codeToFlag(c)).join('  ')
+      heroEl.textContent = flagStr + '    ' + flagStr
+    }
+
+    // Nat cloud
+    const natTitle = document.getElementById('natTitle')
+    if (natTitle) natTitle.innerHTML = `${codes.length} nationalities, <em style="font-style:italic;color:var(--accent)">one France</em>`
+    const cloud = document.getElementById('natCloud')
+    if (cloud) cloud.innerHTML = codes.map(c => `<span class="nat-tag">${codeToFlag(c)} ${natMap[c]}</span>`).join('')
   })
   .catch(() => {
-    document.getElementById('statHosts').textContent = '15'
-    document.getElementById('statAvail').textContent = '13'
+    document.getElementById('statHosts').textContent = '1,000+'
+    document.getElementById('statNat').textContent = '195'
+    document.getElementById('statAvail').textContent = '—'
   })
 </script>
 <script src="lang.js"></script>
