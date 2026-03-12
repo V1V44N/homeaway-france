@@ -1,4 +1,8 @@
-homeaway_auth.db
+instance/
+*.db
+*.sqlite
 __pycache__/
 *.pyc
 .env
+.vercel
+node_modules/
