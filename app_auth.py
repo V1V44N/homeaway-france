@@ -1,25 +1,20 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 import hashlib, os, secrets, jwt
+from groq import Groq
 
 app = Flask(__name__)
 CORS(app)
 
-# Database: PostgreSQL on Vercel (via DATABASE_URL), SQLite locally
-database_url = os.environ.get('DATABASE_URL', 'sqlite:///homeaway_auth.db')
-if database_url.startswith('postgres://'):
-    database_url = database_url.replace('postgres://', 'postgresql://', 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///homeaway_auth.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'homeaway-dev-secret-change-in-production')
 
-# AI Chat — GROQ_API_KEY must be set as env var
-_groq_key = os.environ.get('GROQ_API_KEY')
-from groq import Groq
-client = Groq(api_key=_groq_key) if _groq_key else None
+# AI Chat API
+client = Groq(api_key=os.environ.get("GROQ_API_KEY", "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"))
 
 db = SQLAlchemy(app)
 
@@ -30,7 +25,7 @@ class User(db.Model):
     email         = db.Column(db.String(200), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     is_admin      = db.Column(db.Boolean, default=False)
-    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at    = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     host          = db.relationship('Host', backref='user', uselist=False)
 
     def set_password(self, password):
@@ -52,7 +47,7 @@ class Traveller(db.Model):
     first_name    = db.Column(db.String(100), nullable=False)
     last_name     = db.Column(db.String(100), nullable=False)
     nationality   = db.Column(db.String(100))
-    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at    = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     reviews       = db.relationship('Review', backref='traveller', lazy=True)
 
     def set_password(self, password):
@@ -90,8 +85,8 @@ class Host(db.Model):
     hosting_since    = db.Column(db.String(20))
     max_guests       = db.Column(db.Integer, default=1)
     available        = db.Column(db.Boolean, default=True)
-    created_at       = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at       = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at       = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at       = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     reviews          = db.relationship('Review', backref='host', lazy=True, cascade='all, delete-orphan')
 
     def avg_rating(self):
@@ -129,13 +124,13 @@ class Review(db.Model):
     body          = db.Column(db.Text)
     photo_base64  = db.Column(db.Text)
     photo_mime    = db.Column(db.String(30))
-    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at    = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
         t = self.traveller
         return {
             'id': self.id, 'host_id': self.host_id, 'traveller_id': self.traveller_id,
-            'traveller_name': t.full_name if t else 'Unknown',
+            'traveller_name': f'{t.first_name} {t.last_name}' if t else 'Unknown',
             'traveller_nat': t.nationality if t else '',
             'stars': self.stars,
             'cleanliness': self.cleanliness, 'hospitality': self.hospitality, 'communication': self.communication,
@@ -149,7 +144,7 @@ class Review(db.Model):
 # ── AUTH HELPERS ──
 
 def make_token(user_id, role='host'):
-    payload = {'user_id': user_id, 'role': role, 'exp': datetime.utcnow() + timedelta(days=7)}
+    payload = {'user_id': user_id, 'role': role, 'exp': datetime.now(timezone.utc) + timedelta(days=7)}
     return jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
 def require_auth(f):
@@ -223,7 +218,12 @@ def login():
 @app.route('/api/auth/me', methods=['GET'])
 @require_auth
 def me():
-    return jsonify(request.current_user.to_dict())
+    user = request.current_user
+    data = user.to_dict()
+    host = Host.query.filter_by(user_id=user.id).first()
+    data['has_profile'] = host is not None
+    data['profile'] = host.to_dict() if host else None
+    return jsonify(data)
 
 
 # ── TRAVELLER AUTH ──
@@ -255,6 +255,37 @@ def traveller_login():
 @require_traveller
 def traveller_me():
     return jsonify(request.current_traveller.to_dict())
+
+
+# ── AI CHAT AGENTS ──
+
+@app.route('/chat', methods=['POST', 'OPTIONS'])
+def chat():
+    if request.method == 'OPTIONS':
+        response = jsonify({})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+        response.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+        return response
+
+    data = request.json
+    try:
+        messages = [{"role": "system", "content": data.get('system', '')}] + data.get('messages', [])
+        
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages,
+            max_tokens=1000,
+            temperature=0.6
+        )
+        reply = response.choices[0].message.content
+        r = jsonify({"reply": reply})
+    except Exception as e:
+        r = jsonify({"error": str(e)})
+        r.status_code = 500
+
+    r.headers.add("Access-Control-Allow-Origin", "*")
+    return r
 
 
 # ── HOST PROFILE ──
@@ -292,7 +323,7 @@ def update_profile():
         if field in data: setattr(host, field, data[field])
     if 'languages' in data:
         host.languages = ','.join(data['languages']) if isinstance(data['languages'],list) else data['languages']
-    host.updated_at = datetime.utcnow()
+    host.updated_at = datetime.now(timezone.utc)
     db.session.commit()
     return jsonify(host.to_dict())
 
@@ -394,5 +425,5 @@ if __name__ == '__main__':
             admin = User(email='admin@homeaway.com', is_admin=True)
             admin.set_password('admin123')
             db.session.add(admin); db.session.commit()
-            print('✅ Admin created: admin@homeaway.com / admin123')
+            print('\u2705 Admin created: admin@homeaway.com / admin123')
     app.run(debug=True, port=5000)
