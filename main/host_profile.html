@@ -167,6 +167,8 @@
 <nav>
   <a href="index.html" class="nav-logo">🇫🇷 Home<em>Away</em></a>
   <div class="nav-right">
+    <a href="index.html" class="btn btn-ghost">🏠 Home</a>
+    <a href="ai_agents.html" class="btn btn-ghost">🤖 AI</a>
     <span id="travellerBadge" style="font-size:0.78rem;color:var(--muted);display:none"></span>
     <a href="traveller_auth.html" class="btn btn-ghost" id="loginBtn"><span data-fr="Se connecter" data-en="Log in">Se connecter</span></a>
     <a href="traveller_map.html" class="btn btn-primary"><span data-fr="← Carte" data-en="← Map">← Carte</span></a>
@@ -197,7 +199,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API = '/api'
+const API = 'http://localhost:5000/api'
 const params = new URLSearchParams(window.location.search)
 const hostId = params.get('id')
 
