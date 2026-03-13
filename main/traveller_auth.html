@@ -71,6 +71,10 @@
 
 <nav>
   <a href="index.html" class="nav-logo">🇫🇷 Home<em>Away</em></a>
+  <div style="display:flex; gap:0.5rem;">
+    <a href="index.html" style="color:var(--muted); text-decoration:none; font-size:0.85rem; padding:0.4rem 0.8rem; border-radius:8px; border:1px solid var(--border); transition:all 0.2s;" onmouseover="this.style.color='var(--accent)'; this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--muted)'; this.style.borderColor='var(--border)'">🏠 Home</a>
+    <a href="ai_agents.html" style="color:var(--muted); text-decoration:none; font-size:0.85rem; padding:0.4rem 0.8rem; border-radius:8px; border:1px solid var(--border); transition:all 0.2s;" onmouseover="this.style.color='var(--accent)'; this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--muted)'; this.style.borderColor='var(--border)'">🤖 AI Assistants</a>
+  </div>
 </nav>
 
 <div class="page">
@@ -143,7 +147,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API = '/api'
+const API = 'http://localhost:5000/api'
 const params = new URLSearchParams(window.location.search)
 const redirect = params.get('redirect') || 'traveller_map.html'
 
