@@ -103,7 +103,8 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 16px;
-      overflow: hidden;
+      overflow-y: auto;
+      max-height: 600px;
     }
     table { width: 100%; border-collapse: collapse; }
     thead th {
@@ -115,6 +116,10 @@
       color: var(--muted);
       border-bottom: 1px solid var(--border);
       font-weight: 400;
+      position: sticky;
+      top: 0;
+      background: var(--card);
+      z-index: 10;
     }
     tbody tr {
       border-bottom: 1px solid var(--border);
@@ -293,6 +298,8 @@
 <header>
   <div class="logo">Home<em>Away</em> <span style="font-size:0.8rem;color:var(--muted);font-family:'Outfit',sans-serif;font-weight:300;">Host Directory</span></div>
   <div class="header-actions">
+    <a href="index.html" class="btn btn-ghost btn-sm">🏠 Home</a>
+    <a href="ai_agents.html" class="btn btn-ghost btn-sm">🤖 AI Assistants</a>
     <button class="btn btn-ghost btn-sm" onclick="seedData()">⚡ Seed Sample Data</button>
     <button class="btn btn-primary" onclick="openForm()">+ Add Host</button>
   </div>
@@ -408,7 +415,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API = '/api'
+const API = 'http://localhost:5000/api'
 
 const CULTURES = [
   {code:'IN',label:'Indian',flag:'🇮🇳'},{code:'CN',label:'Chinese',flag:'🇨🇳'},
