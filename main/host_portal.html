@@ -254,6 +254,8 @@
   <header>
     <div class="logo">Home<em>Away</em> <span style="font-size:0.75rem;color:var(--muted);font-family:'Outfit',sans-serif;font-weight:300">Host Portal</span></div>
     <div class="user-pill">
+      <a href="index.html" class="btn btn-ghost btn-sm">🏠 Home</a>
+      <a href="ai_agents.html" class="btn btn-ghost btn-sm">🤖 AI</a>
       <span id="headerEmail"></span>
       <div class="dot" id="headerInitial">?</div>
       <button class="btn btn-ghost btn-sm" onclick="logout()">Sign Out</button>
@@ -286,6 +288,7 @@
         <div class="detail-grid" id="profileDetails"></div>
         <div class="card-actions">
           <button class="btn btn-ghost" onclick="showProfileForm(true)">✏️ Edit Profile</button>
+          <button class="btn btn-ghost" onclick="viewPublicProfile()" style="border-color:var(--accent);color:var(--accent)">👤 View My Public Profile</button>
           <button class="btn btn-danger" onclick="deleteProfile()">🗑 Delete Profile</button>
         </div>
       </div>
@@ -338,7 +341,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API = '/api'
+const API = 'http://localhost:5000/api'
 
 const CULTURES = [
   {code:'IN',label:'Indian',flag:'🇮🇳'},{code:'CN',label:'Chinese',flag:'🇨🇳'},
@@ -360,6 +363,7 @@ CULTURES.forEach(c => { pNat.innerHTML += `<option value="${c.code}">${c.flag} $
 let token = localStorage.getItem('ha_token') || null
 let currentUser = null
 let hasProfile = false
+let myHostId = null
 
 // ── INIT ──
 if (token) loadMe()
@@ -469,6 +473,7 @@ function showNoProfile() {
 function showProfileView(profile) {
   if (!profile) { loadProfile(); return }
   hasProfile = true
+  myHostId = profile.id || null
   document.getElementById('noProfile').style.display = 'none'
   document.getElementById('viewProfile').style.display = 'block'
   document.getElementById('editProfile').style.display = 'none'
@@ -589,6 +594,15 @@ async function deleteProfile() {
     showToast('Profile deleted')
     showNoProfile()
   } catch { showToast('Delete failed', true) }
+}
+
+// ── VIEW PUBLIC PROFILE ──
+function viewPublicProfile() {
+  if (myHostId) {
+    window.open(`host_profile.html?id=${myHostId}`, '_blank')
+  } else {
+    showToast('Profile ID not found — try refreshing.', true)
+  }
 }
 
 // ── LOGOUT ──
