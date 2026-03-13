@@ -42,13 +42,15 @@
 
     .france-banner { background: linear-gradient(135deg, rgba(0,35,149,0.25), rgba(237,41,57,0.12)); border-bottom: 1px solid var(--border); padding: 0.45rem 1.5rem; font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
 
-    .main { display: flex; flex: 1; overflow: hidden; }
+    .main { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 
-    .sidebar { width: 340px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+    .sidebar { width: 340px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
     .sidebar-header { padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .sidebar-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 300; margin-bottom: 0.1rem; }
     .sidebar-header p { font-size: 0.75rem; color: var(--muted); }
-    .nat-pills { display: flex; gap: 0.4rem; flex-wrap: wrap; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .nat-pills { display: flex; gap: 0.4rem; flex-wrap: wrap; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); flex-shrink: 0; max-height: 120px; overflow-y: auto; }
+    .nat-pills::-webkit-scrollbar { width: 4px; }
+    .nat-pills::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
     .nat-pill { padding: 0.2rem 0.6rem; background: var(--card); border: 1px solid var(--border); border-radius: 2rem; font-size: 0.7rem; cursor: pointer; transition: all 0.15s; color: var(--muted); }
     .nat-pill:hover { border-color: var(--accent); color: var(--accent); }
     .nat-pill.active { background: var(--accent); color: white; border-color: var(--accent); }
@@ -107,6 +109,8 @@
     <span><span data-fr="France — Trouvez un hôte" data-en="France — Find a Host">France — Trouvez un hôte</span></span>
   </div>
   <div class="header-controls">
+    <a href="index.html" class="btn btn-ghost">🏠 Home</a>
+    <a href="ai_agents.html" class="btn btn-ghost">🤖 AI</a>
     <div class="search-wrap">
       <span class="si">🔍</span>
       <input type="text" id="searchInput" placeholder="Ville, nom, nationalité…" data-fr-placeholder="Ville, nom, nationalité…" data-en-placeholder="City, name, nationality…" oninput="applyFilters()"/>
@@ -145,7 +149,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API = '/api'
+const API = 'http://localhost:5000/api'
 
 const CULTURES = [
   {code:'FR',label:'Français',flag:'🇫🇷'},
@@ -182,13 +186,19 @@ async function loadHosts() {
   } finally { showLoader(false) }
 }
 
+function codeToFlag(code) {
+  return [...code.toUpperCase()].map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('')
+}
+
 function buildNatPills() {
   const codes = [...new Set(allHosts.map(h => h.nationality_code))]
   const pills = document.getElementById('natPills')
   pills.innerHTML = `<span class="nat-pill active" onclick="filterNat(this,'')"><span data-fr="Tous" data-en="All">Tous</span></span>`
   codes.forEach(code => {
-    const c = cultureMap[code] || { flag:'🌐', label: code }
-    pills.innerHTML += `<span class="nat-pill" onclick="filterNat(this,'${code}')">${c.flag} ${c.label}</span>`
+    const c = cultureMap[code]
+    const flag = c ? c.flag : codeToFlag(code)
+    const label = c ? c.label : (allHosts.find(h => h.nationality_code === code)?.nationality || code)
+    pills.innerHTML += `<span class="nat-pill" onclick="filterNat(this,'${code}')"><span style="font-size:1.1em">${flag}</span> ${label}</span>`
   })
 }
 
@@ -205,12 +215,14 @@ function applyFilters() {
   const city  = document.getElementById('cityFilter').value
 
   filteredHosts = allHosts.filter(h => {
+    const c = cultureMap[h.nationality_code] || { label: h.nationality }
     const matchNat   = !selectedNat || h.nationality_code === selectedNat
     const matchAvail = !avail || String(h.available) === avail
     const matchCity  = !city || h.city.toLowerCase().includes(city.toLowerCase())
     const matchQ     = !q || h.full_name.toLowerCase().includes(q)
                           || h.city.toLowerCase().includes(q)
                           || h.nationality.toLowerCase().includes(q)
+                          || c.label.toLowerCase().includes(q)
     return matchNat && matchAvail && matchCity && matchQ
   })
 
@@ -266,10 +278,12 @@ function renderMarkers() {
 
   filteredHosts.forEach(h => {
     if (!h.lat || !h.lng) return
-    const c = cultureMap[h.nationality_code] || { flag:'🌐' }
+    const c = cultureMap[h.nationality_code]
+    const markerFlag = c ? c.flag : codeToFlag(h.nationality_code)
+    const popupFlag  = c ? c.flag : codeToFlag(h.nationality_code)
     const icon = L.divIcon({
       className: '',
-      html: `<div style="font-size:1.5rem;line-height:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.5));cursor:pointer">${c.flag}</div>`,
+      html: `<div style="font-size:1.5rem;line-height:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.5));cursor:pointer">${markerFlag}</div>`,
       iconSize:[28,28], iconAnchor:[14,14], popupAnchor:[0,-18],
     })
     const langs = Array.isArray(h.languages) ? h.languages.join(', ') : (h.languages||'')
@@ -280,7 +294,7 @@ function renderMarkers() {
       : ''
     const marker = L.marker([h.lat, h.lng], { icon }).addTo(map)
     marker.bindPopup(`
-      <div class="popup-flag">${c.flag}</div>
+      <div class="popup-flag">${popupFlag}</div>
       <div class="popup-name">${h.full_name}</div>
       <div class="popup-nat">${h.nationality}</div>
       ${h.avg_rating ? `<div style="display:flex;align-items:center;gap:0.4rem;margin:0.3rem 0;font-size:0.9rem">${starsHtml}<span style="font-size:0.75rem;color:var(--muted)">${h.avg_rating} (${h.review_count})</span></div>` : ''}
