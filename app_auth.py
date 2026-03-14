@@ -9,7 +9,7 @@ from groq import Groq
 app = Flask(__name__)
 CORS(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///homeaway_auth.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/homeaway_auth.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'homeaway-dev-secret-change-in-production')
 
