@@ -259,7 +259,7 @@ def traveller_me():
 
 # ── AI CHAT AGENTS ──
 
-@app.route('/chat', methods=['POST', 'OPTIONS'])
+@app.route('/api/chat', methods=['POST', 'OPTIONS'])
 def chat():
     if request.method == 'OPTIONS':
         response = jsonify({})
